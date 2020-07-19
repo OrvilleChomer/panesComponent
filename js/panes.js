@@ -2,6 +2,60 @@
     panes.js
 
 
+    Key Code Reference Tags:
+         -  #library_constructor
+         -  #internal_constants        (for library)
+         -  #mouse_event_listeners
+         -  #defined_library_properties
+         -  #show_panes                (method for render)
+         -  #viewInnards_library                        VIEW INNARDS   (Library)
+         -  #library_private_functions
+         -  #build_PanesMarkup_For_Container
+         -  #build_Pane_Style_Block
+         -  #build_Pane_Style_Unselectable
+         -  #other_Resize_Bar_Mapping
+         -  #get_next_id
+         -  #create_pane_funct
+         -  #Create_Pane_constructor
+         -  #init_pane_instance_vars
+         -  #related_panes_and_resize_bars_init
+         -  #pane_positioning_vars_init
+         -  #pane_parent_container
+         -  #define_pane_obj_properties            PROPERTY DEFS
+         -  #pane_edge_position_properties         PROPERTY DEFS   (pane edge)
+         -  #pane_id_property_def
+         -  #pane_add_pane_method     (to add a child pane to a pane)
+         -  #pane_add_content
+         -  #pane_add_related_pane
+         -  #pane_add_resize_bar_ref  (to add a ref to a resize bar to a pane)
+         -  #pane_gen_markup_method   (returns an HTML markup string)
+         -  #pane_set_dom_ref         (variable refs to pane and pane content)
+         -  #pane_set_new_height
+         -  #pane_set_new_pos
+         -  #pane_set_new_width
+         -  #pane_view_innards                     VIEW INNARDS  (pane)
+         -  #resize_bar_view_innards               VIEW INNARDS  (resize bar)
+         -  #create_resize_bar_funct
+         -  #create_resize_bar_constructor
+         -  #resize_prop_def                       PROPERTY DEFS
+         -  #resize_bar_edge_position_properties   PROPERTY DEFS  (resize bar edge)
+         -  #resize_bar_add_another_pane
+         -  #resize_bar_get_html_markup
+         -  #resize_bar_set_dom_ref
+         -  #mouse_events
+         -  #panes_mouse_down
+         -  #panes_mouse_move
+         -  #panes_mouse_up
+         -  #resize_bar_drag_begin
+         -  #resize_bar_drag_end
+         -  #resize_bar_drag_move
+
+         -  #pos_style
+         -  #get_val               (used to process input params)
+         
+         -
+
+
 
  ************************************************************************************/
 
@@ -25,6 +79,11 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
 // =========================================
 
+
+/*************************************************************************
+ *  Constructor for Library
+ *  #library_constructor
+ *************************************************************************/ 
  function OrvPanes(siMContainerId) {
     console.log("OrvPanes() Constructor function called")
     const pns = this;
@@ -56,6 +115,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     let bPanesRendered = false;
 
     // INTERNAL NUMERIC CONSTANTS:
+    // #internal_constants
     const orvPANE_RESIZE_BAR_HORIZONTAL = 0;
     const orvPANE_RESIZE_BAR_VERTICAL = 1;
 
@@ -98,6 +158,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     let activeResizeBarObj = undefined;
     let resizeBarEl;
 
+    // #mouse_event_listeners
     masterContainerNd.addEventListener("mousedown", panesMouseDown);
     masterContainerNd.addEventListener("mousemove", panesMouseMove);
     masterContainerNd.addEventListener("mouseup", panesMouseUp);
@@ -115,6 +176,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         buildPaneStyleBlock();
     } // end if
 
+    //  #defined_library_properties 
+
     //setupObjTypeProp(pns,"orvPanes");
     setupObjTypeProp(pns,"panes");  // June 22, 2020
 
@@ -122,6 +185,12 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         "allPanesByIndex": {
             "get": function() { 
                 return allPanesByIndex;
+            } // end of getter code!
+        },
+
+        "masterContainerNode": {
+            "get": function() { 
+                return masterContainerNd;
             } // end of getter code!
         },
 
@@ -212,6 +281,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
       after setting up all the panes desired for a workspace,
       you would call this to add it to the DOM.
 
+      #show_panes
     *************************************************************************/ 
     pns.showPanes = function() {        
         console.log("  👀👀👀👀👀 pns.showPanes() method called   👀👀👀👀")
@@ -255,6 +325,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     /********************************************************************************
      *   Used for debugging to look at the internal state of the overall
      *   container for the panes in your browser's debugger.
+     *   #viewInnards_library
      ********************************************************************************/
     pns.viewInnards = function() {
 
@@ -266,6 +337,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     // ##############################################################
 
     //    PRIVATE FUNCTIONS BELOW:
+
+    //    #library_private_functions
 
     // ##############################################################
 
@@ -292,6 +365,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     *               .showPanes() method
     * 
     *  Builds all the HTML markup as a string for all the panes and returns it
+    *  #build_PanesMarkup_For_Container
     ********************************************************************************/    
     function buildPanesMarkupForContainer(paneContainer) {
         console.log("buildPanesMarkupForContainer() function called")
@@ -329,6 +403,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
 
    /********************************************************************************
+    *   #build_Pane_Style_Block
     ********************************************************************************/
     function buildPaneStyleBlock() {
         console.log("🎻🎻 buildPaneStyleBlock() function called 🎻🎻")
@@ -444,6 +519,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
 
    /********************************************************************************
+    * 
+    *   #build_Pane_Style_Unselectable
     ********************************************************************************/    
     function buildPaneStyleUnselectable() {
         const s=[];
@@ -462,6 +539,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
    * 
    *  Called from:   pns.showPanes() method
    * 
+   * #other_Resize_Bar_Mapping
    ********************************************************************************/
    function otherResizeBarMapping(pane) {
        console.log("😜😜otherResizeBarMapping()  called 😜😜")
@@ -513,6 +591,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
 
    /********************************************************************************
+    * 
+    * #get_next_id
     ********************************************************************************/
     function getNextId() {
         const nNewId = nNextIdNum;
@@ -540,6 +620,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
    /********************************************************************************
      create and return a Pane object...
+
+     #create_pane_funct
     ********************************************************************************/ 
     function createPane(params) {
         console.log("🌞🌞🌞createPane() function called 🌞🌞🌞")
@@ -547,10 +629,13 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         const orvWINDOW_STATE_MAXIMIZED = 1;
         const orvWINDOW_STATE_MINIMIZED = 2;
 
+        //  #Create_Pane_constructor
         function CreatePane(params) {
             console.log("🌜🌜🌜CreatePane() Constructor called 🌜🌜🌜")
             const pane = this;
             const sPaneId = getNextId();
+
+            // #init_pane_instance_vars
             let paneAlignment = getVal(params,"paneAlignment",orvPANE_ALIGN_LEFT);
             let bViewportPane = getVal(params,"viewPortPane",false);
             let bPaneLocked = getVal(params,"paneLocked",false);
@@ -566,6 +651,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let bPosAdjusted = false;
 
             // related panes and resize bars
+            // #related_panes_and_resize_bars_init
             let relatedItemsByIndex = []; 
             let relatedItemsById = []; 
 
@@ -582,7 +668,11 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let childPanesByIndex = [];
             let childPanesById = [];
 
+            let paneResizeBarsByIndex = [];
+            let paneResizeBarsById = [];
+
             // positioning:
+            //  #pane_positioning_vars_init
             let nPaneLeft = -1;
             let nPaneRight = -1;
             let nPaneTop = -1;
@@ -590,10 +680,6 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let nWindowLeft = -1;
             let nWindowTop = -1;
             
-            let paneResizeBarsByIndex = [];
-            let paneResizeBarsById = [];
-
-      
             let nLastCurrentWidth = nCurrentWidth;
             let nLastCurrentHeight = nCurrentHeight;
             let nLastPaneLeft = nPaneLeft;
@@ -602,8 +688,13 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let nLastPaneBottom = nPaneBottom;
 
             // ref objects:
-            let parentContainer = getVal(params,"parentContainer",masterContainer);
+            // #pane_parent_container
+            let parentContainer = getVal(params,"parentContainer",masterContainer);  // masterContainer is the fallback
+            let parentContainerNode; // DOM node for the parent container
             
+            if (parentContainer.objType === "panes") {
+                parentContainerNode = parentContainer.masterContainerNode
+            } // end if
 
             // ref to pane DIV that is part of DOM (when it is finally generated)
             let paneNd,paneContentNd;
@@ -611,6 +702,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             console.log("sCaption='"+sCaption+"'   ... sPaneId: '"+sPaneId+"'");
 
             // define some read-only properties:
+            // #define_pane_obj_properties
             console.log("about to define custom getters.")
             Object.defineProperties(pane, {
                 //
@@ -626,6 +718,12 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     } // end of getter code!
                 },
 
+                "caption": {
+                    "get": function() { 
+                        return sCaption;
+                    } // end of getter code!
+                },
+
                 "align": {
                     "get": function() { 
                         if (paneAlignment === orvPANE_ALIGN_LEFT) return "left";
@@ -637,6 +735,80 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     } // end of getter code!
                 },
 
+                // ####################################################################
+                //  #pane_edge_position_properties
+                // ####################################################################
+                "leftEdge": {
+                    "get": function() { 
+                        if (typeof parentContainerNode === "undefined") {
+                            return -1;
+                        } else if (nPaneLeft > -1) {
+                            return nPaneLeft;
+                        } else if (nCurrentWidth > 0 && nPaneRight>-1) {
+                            return parentContainerNode.offsetWidth - nCurrentWidth - nPaneRight
+                        } else {
+                            return -1;
+                        } // end if/else if/else if/else
+
+                        
+                        
+                    } // end of getter code!
+                },
+
+                "rightEdge": {
+                    "get": function() { 
+                        if (typeof parentContainerNode === "undefined") {
+                            return -1;
+                        } else {
+                            if (nPaneRight > -1) {
+                                return parentContainerNode.offsetWidth - nPaneRight;
+                            } else if (nCurrentWidth>0 && nPaneLeft>-1) {
+                                return nPaneLeft + nCurrentWidth;
+                            } else {
+                                return -1;
+                            } // end if/else
+                            
+                        } // end if/else
+                    } // end of getter code!
+                },
+
+                "topEdge": {
+                    "get": function() { 
+                        if (typeof parentContainerNode === "undefined") {
+                            return -1;
+                        } else if (nPaneTop > -1) {
+                            return nPaneTop;
+                        } else if (nCurrentHeight > 0 && nPaneBottom>-1) {
+                            return parentContainerNode.offsetHeight - nCurrentHeight - nPaneBottom
+                        } else {
+                            return -1;
+                        } // end if/else if/else if/else
+
+                        return nPaneTop;
+                    } // end of getter code!
+                },
+
+                "bottomEdge": {
+                    "get": function() { 
+                        if (typeof parentContainerNode === "undefined") {
+                            return -1;
+                        } else {
+                            
+                            if (nPaneBottom > -1) {
+                                return parentContainerNode.offsetHeight - nPaneBottom;
+                            } else if (nCurrentHeight>0 && nPaneTop>-1) {
+                                return nPaneTop + nCurrentHeight;
+                            } else {
+                                return -1;                                
+                            } // end if
+                        } // end if/else
+                    } // end of getter code!
+                },
+
+                // ####################################################################
+                // ####################################################################
+
+                // #pane_id_property_def
                 "id": {
                     "get": function() { 
                         return sPaneId;
@@ -664,6 +836,16 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 "parentContainer": {
                     "get": function() { 
                         return parentContainer;
+                    } // end of getter code!
+                },
+
+                /*
+                  Will not be able to access property below properly until first render
+                  has occurred!  ... if a Pane that is a child of another Pane
+                 */
+                "parentContainerNode": {
+                    "get": function() { 
+                        return parentContainerNode;
                     } // end of getter code!
                 },
 
@@ -714,6 +896,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
            /********************************************************************************
             *  add a child pane to the current pane...
+            *  #pane_add_pane_method
 	        ********************************************************************************/
             pane.addPane = function(params) {
                 console.log(" 🍼🍼  pane.addPane() method called to add a Child pane!!  🍼🍼")
@@ -726,6 +909,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
            /********************************************************************************
             *  addContent is NOT used for panes that already have child panes.
+            *  #pane_add_content
 	        ********************************************************************************/
             pane.addContent = function(params) {
                 console.log(" 🍔 pane.addContent() method called")
@@ -748,6 +932,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             *   The contents of the internal variable:   relatedItemsByIndex   can be access from the {pane}
             *   object via the:   relatedItemsByIndex property of the pane!
             * 
+            *   #pane_add_related_pane
 	        ********************************************************************************/            
             pane.addRelatedPane = function(relatedPane) {
                 console.log(" ⛽ pane.addRelatedPane() called")
@@ -770,6 +955,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             * 
             *   Called by:   CreateResizeBar()   Constructor
             * 
+            *   #pane_add_resize_bar_ref
 	        ********************************************************************************/
             pane.addResizeBarRef = function(rb) {
                 console.log("   🎭🎭 pane.addResizeBarRef() method called  🎭🎭")
@@ -787,6 +973,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             * 
             *   Called by:
             *            buildPanesMarkupForContainer()
+            * 
+            *   #pane_gen_markup_method
 	        ********************************************************************************/            
             pane.genMarkup = function(theNextPositions, theLastCreatedPanes) {
                 console.log("⛄ pane.genMarkup() method called ⛄")
@@ -829,7 +1017,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
                         if (theNext.topPos>0) {
                             console.log("about to call: createResizeBar()")
-                            const rb = createResizeBar({align: "top", previousPane: theLast.topPane, currentPane: pane, pos: theNext.topPos});
+                            const rb = createResizeBar({align: "top", previousPane: theLast.topPane, 
+                                                        parentContr:parentContainer, parentContainerEl: parentContainerNode,
+                                                        currentPane: pane, pos: theNext.topPos});
                             s1.push(rb.getHtmlMarkup());
                             // search for:   resizeBar.getHtmlMarkup
                         } // end if
@@ -855,7 +1045,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
                         if (theNext.bottomPos>0) {
                             console.log("about to call: createResizeBar()")
-                            const rb = createResizeBar({align: "bottom", previousPane: theLast.bottomPane, currentPane: pane, pos: theNext.bottomPos});
+                            const rb = createResizeBar({align: "bottom", previousPane: theLast.bottomPane, 
+                                                        parentContr:parentContainer, parentContainerEl: parentContainerNode,
+                                                        currentPane: pane, pos: theNext.bottomPos});
                             s1.push(rb.getHtmlMarkup());
                             theNext.bottomPos = theNext.bottomPos + orvRESIZE_BAR_THICKNESS;
                         } // end if
@@ -880,7 +1072,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
                         if (theNext.leftPos>0) {
                             console.log("about to call: createResizeBar()")
-                            const rb = createResizeBar({align: "left", previousPane: theLast.leftPane, currentPane: pane, pos: theNext.leftPos});
+                            const rb = createResizeBar({align: "left", previousPane: theLast.leftPane,
+                                                        parentContr:parentContainer, parentContainerEl: parentContainerNode, 
+                                                        currentPane: pane, pos: theNext.leftPos});
                             s1.push(rb.getHtmlMarkup());
                         } // end if
 
@@ -904,7 +1098,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
                         if (theNext.rightPos>0) {
                             console.log("about to call: createResizeBar()")
-                            const rb = createResizeBar({align: "right", previousPane: theLast.rightPane, currentPane: pane, pos: theNext.rightPos});
+                            const rb = createResizeBar({align: "right", previousPane: theLast.rightPane,
+                                                        parentContr:parentContainer, parentContainerEl: parentContainerNode, 
+                                                        currentPane: pane, pos: theNext.rightPos});
                             s1.push(rb.getHtmlMarkup());
                             theNext.rightPos = theNext.rightPos + orvRESIZE_BAR_THICKNESS;
                         } // end if
@@ -932,25 +1128,33 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
                         if (theNext.topPos>0) {
                             console.log("about to call: createResizeBar()")
-                            const rb = createResizeBar({align: "top", previousPane: theLast.topPane, currentPane: pane, pos: theNext.topPos});
+                            const rb = createResizeBar({align: "top", previousPane: theLast.topPane, 
+                                                        parentContr:parentContainer, parentContainerEl: parentContainerNode,
+                                                        currentPane: pane, pos: theNext.topPos});
                             s1.push(rb.getHtmlMarkup());
                             theNext.topPos = theNext.topPos + orvRESIZE_BAR_THICKNESS;
                         } // end if
 
                         if (theNext.bottomPos>0) {
-                            const rb = createResizeBar({align: "bottom", previousPane: theLast.bottomPane, currentPane: pane, pos: theNext.bottomPos});
+                            const rb = createResizeBar({align: "bottom", previousPane: theLast.bottomPane, 
+                                                        parentContr:parentContainer, parentContainerEl: parentContainerNode,
+                                                        currentPane: pane, pos: theNext.bottomPos});
                             s1.push(rb.getHtmlMarkup());
                             theNext.bottomPos = theNext.bottomPos + orvRESIZE_BAR_THICKNESS;
                         } // end if
 
                         if (theNext.leftPos>0) {
-                            const rb = createResizeBar({align: "left", previousPane: theLast.leftPane, currentPane: pane, pos: theNext.leftPos});
+                            const rb = createResizeBar({align: "left", previousPane: theLast.leftPane, 
+                                                        parentContr:parentContainer, parentContainerEl: parentContainerNode,
+                                                        currentPane: pane, pos: theNext.leftPos});
                             s1.push(rb.getHtmlMarkup());
                             theNext.leftPos = theNext.leftPos + orvRESIZE_BAR_THICKNESS;
                         } // end if
 
                         if (theNext.rightPos>0) {
-                            const rb = createResizeBar({align: "right", previousPane: theLast.rightPane, currentPane: pane, pos: theNext.rightPos});
+                            const rb = createResizeBar({align: "right", previousPane: theLast.rightPane, 
+                                                        parentContr:parentContainer, parentContainerEl: parentContainerNode,
+                                                        currentPane: pane, pos: theNext.rightPos});
                             s1.push(rb.getHtmlMarkup());
                             theNext.rightPos = theNext.rightPos + orvRESIZE_BAR_THICKNESS;
                         } // end if
@@ -1033,6 +1237,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
              *  - One is for the overall {pane} panel itself.   paneNd
              *  - The other is for the element that the pane's "content" is placed in:  paneContentNd
              * 
+             * 
+             *   #pane_set_dom_ref
 	         ********************************************************************************/
             pane.setDomRef = function() {
                 console.log("   🤑 pane.setDomRef() method called 🤑 - sPaneId: '"+sPaneId+"'")
@@ -1048,6 +1254,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
              *   Called from:    resizeBarDragMove()
              * 
              *   Sets the panel height in the DOM of the current pane.
+             * 
+             *   #pane_set_new_height
 	         ********************************************************************************/
             pane.setNewHeight = function(nNewHeight) {
                 let sNewHeight = "";
@@ -1082,6 +1290,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
              * 
              *   Called from:   resizeBarDragMove()
              * 
+             *   #pane_set_new_pos
 	         ********************************************************************************/
             pane.setNewPos = function(nNewPos, sAlign) {
                 let sNewPos = "";
@@ -1129,6 +1338,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
              * 
              *   Sets the panel width of the current pane in the DOM
              * 
+             *   #pane_set_new_width
 	         ********************************************************************************/
             pane.setNewWidth = function(nNewWidth) {
                 let sNewWidth = "";
@@ -1162,11 +1372,116 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             /********************************************************************************
              *   Used for debugging to look at the internal state of a "pane"
              *   in your browser's debugger
+             *   
+             *   #pane_view_innards
 	         ********************************************************************************/
-            pane.viewInnards = function() {
+            pane.viewInnards = function(bNoDrilldown) {
+                let nMax;
+                let sIndent = "";
 
-                debugger;
+                const fm1 = "color:blue;"
+                const fm1b = "color:blue;font-style:italic;"
+                const fm2 = "color:red;font-weight:bold;";
+                const fm3 = "background-color:#ffcc99;padding:4px;";
+
+                if (typeof bNoDrilldown === "undefined") {
+                    console.clear();
+                    console.log(" ")
+                    console.log("***************************************************************")
+                    console.log(" - VIEW INNARDS... FOR SELECTED PANE:")
+                    console.log("    To return to stepping through the code,")
+                    console.log("    go to the %c'sources'%c tab.","font-weight:bold","")
+                    console.log("***************************************************************")
+                } else {
+                   // sIndent = "    ";
+                } // end if
+
+                if (typeof bNoDrilldown === "undefined") {
+                    console.group("🔑%cid:                  %c'"+pane.id+"'",fm1,fm2)
+                } else {
+                    console.groupCollapsed("%c🔑id:                  %c'"+pane.id+"'",fm1,fm2)
+                } // end if/else
+
+                console.log(sIndent+"%cobjType:             %c'"+pane.objType+"'",fm1,fm2)
+                console.log(sIndent+"%ccaption:             %c'"+pane.caption+"'",fm1,fm2)
+                console.log(sIndent+"%cleft:                 %c"+pane.left+" ",fm1,fm2)
+                console.log(sIndent+"%cright:                %c"+pane.right+" ",fm1,fm2)
+                console.log(sIndent+"%ctop:                  %c"+pane.top+" ",fm1,fm2)
+                console.log(sIndent+"%cbottom:               %c"+pane.bottom+" ",fm1,fm2)
+                console.log(sIndent+"%cwidth:                %c"+pane.width+" ",fm1,fm2)
+                console.log(sIndent+"%cheight:               %c"+pane.height+" ",fm1,fm2)
+                console.log(sIndent+"%cminWidth:             %c"+pane.minWidth+" ",fm1,fm2)
+                console.log(sIndent+"%cminHeight:            %c"+pane.minHeight+" ",fm1,fm2)
+
+                console.group(sIndent+"%cPane Edge Values:  ...pixels over from top-left of container...",fm3)
+                console.log(sIndent+"%cleftEdge:             %c"+pane.leftEdge+" ",fm1,fm2)
+                console.log(sIndent+"%crightEdge:            %c"+pane.rightEdge+" ",fm1,fm2)
+                console.log(sIndent+"%ctopEdge:              %c"+pane.topEdge+" ",fm1,fm2)
+                console.log(sIndent+"%cbottomEdge:           %c"+pane.bottomEdge+" ",fm1,fm2)
+                console.groupEnd(); // end of Pane Edge Values group
+
+                
+                console.groupCollapsed("%crelatedItemsByIndex("+relatedItemsByIndex.length+" elements):",fm1b)
+                nMax = relatedItemsByIndex.length;
+                for (let n=0;n<nMax;n++) {
+                    const relItm = relatedItemsByIndex[n]
+
+                    if (typeof bNoDrilldown === "undefined")  {
+                        if (relItm.objType === "pane") {
+                            relItm.viewInnards(true)
+                        } // end if
+                    } else {
+                        console.group(sIndent+"🔑id:      '"+relItm.id+"'",fm1,fm2)
+                        console.log(sIndent+"objType: '"+relItm.objType+"'",fm1,fm2)
+
+                        if (relItm.objType === "pane") {
+                            console.log(sIndent+"caption: '"+relItm.caption+"'",fm1,fm2)
+                        } // end if
+                        console.groupEnd();
+                    } // end if (typeof bNoDrilldown === "undefined") / else
+
+                    
+                } // next n
+
+                console.groupEnd(); // end of relatedItemsByIndex group
+                
+                if (paneResizeBarsByIndex.length === 0) {
+                    console.log("paneResizeBarsByIndex(0 elements):")
+                } else {
+                    console.groupCollapsed("%cpaneResizeBarsByIndex("+paneResizeBarsByIndex.length+" elements):",fm1b)
+                    nMax = paneResizeBarsByIndex.length;
+                    for (let n=0;n<nMax;n++) {
+                        const rb = paneResizeBarsByIndex[n];
+    
+                        if (typeof bNoDrilldown === "undefined"){
+                            rb.viewInnards()
+                        } else {
+                            rb.viewInnards(true)
+                        } // end if/else
+                        
+                    } // next n
+                    console.groupEnd(); // end of paneResizeBarsByIndex group
+                } // end if/else
+                
+                
+                console.groupEnd(); // end of group for current pane having its innards viewed!
+
+                if (typeof bNoDrilldown === "undefined") {
+                    console.log("***************************************************************")
+                    console.log(" ")
+                    debugger;
+                    /******************************************************************************
+                     * 
+                     *   If you are seeing this in DevTools,  you are most likely looking 
+                     *   at the [Sources] tab.
+                     * 
+                     *   To see the "viewInnards" report just generated, click on the [Console] tab.
+                     * 
+                     ******************************************************************************/
+                } // end if
+
             } // end of pane.viewInnards() method
+
 
 
             // *** Add new pane to appropriate arrays...
@@ -1214,6 +1529,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     * 
     *   Called multiple times by:   pane.genMarkup()
     * 
+    *   #create_resize_bar_funct
 	********************************************************************************/
     function createResizeBar(params) {
         console.log("createResizeBar() called")
@@ -1222,6 +1538,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         *    
         *    Called by the createResizeBar() function to return an encapsulated
         *    {resizeBar} JavaScript object.
+        * 
+        *    #create_resize_bar_constructor
 	    ********************************************************************************/
         function CreateResizeBar(params) {
             console.log("CreateResizeBar() constructor called")
@@ -1234,12 +1552,20 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let sStyle = "";
             let resizeBarNd; // DOM node of resize bar
 
+
+            let parentContainer = getVal(params,"parentContr",{});
+  
+            // DOM node element of the parent container
+            let parentContainerNode = getVal(params,"parentContainerEl",{});
+
             let relatedItemsByIndex = [];
             let relatedItemsById = [];
 
             let extraPanesByIndex = [];
             let extraPanesById = [];
             let extraPanesByPrevCurr = [];
+
+            let nStartingLeft,nStartingRight,nStartingTop,nStartingBottom;
 
             extraPanesByPrevCurr["curr"] = [];
             extraPanesByPrevCurr["prev"] = [];
@@ -1282,6 +1608,73 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 },
 
 
+                // #########################################################################################
+                //    #resize_bar_edge_position_properties
+                // #########################################################################################
+
+                "leftEdge": {
+                    "get": function() { 
+                        
+                        if (typeof parentContainerNode === "undefined") {
+                            return -1;
+                        } else if (nStartingLeft > -1) {
+                            return nStartingLeft;
+                        } else if (nStartingRight > -1) {
+                            return parentContainerNode.offsetWidth - nStartingRight - orvRESIZE_BAR_HALFTHICKNESS;
+                        } // end if / else if / else
+
+                    } // end of getter code!
+                },  // end of overall 'leftEdge' property block!
+
+                "rightEdge": {
+                    "get": function() { 
+                        if (typeof parentContainerNode === "undefined") {
+                            return -1;
+                        } else if (nStartingRight > -1) {
+                            return parentContainerNode.offsetWidth - nStartingRight;
+                        } else {
+                            return nStartingLeft + orvRESIZE_BAR_THICKNESS;
+                        } // end if / else if / else
+
+                    } // end of getter code!
+                },
+
+                "topEdge": {
+                    "get": function() { 
+                        if (typeof parentContainerNode === "undefined") {
+                            return -1;
+                        } else if (nStartingTop > -1) {
+                            return nStartingTop;
+                        } else if (nStartingBottom > -1) {
+                            return parentContainerNode.offsetHeight - nStartingBottom - orvRESIZE_BAR_HALFTHICKNESS;
+                        } else {
+                            return -1;
+                        }
+                        
+                    } // end of getter code!
+                },// end of overall 'topEdge' property block!
+
+
+                "bottomEdge": {
+                    "get": function() { 
+                        if (typeof parentContainerNode === "undefined") {
+                            return -1;
+                        } else if (nStartingBottom > -1) {
+                            return parentContainerNode.offsetHeight - nStartingBottom
+                        } else if (nStartingTop > -1) {
+                            return nStartingTop + orvRESIZE_BAR_HALFTHICKNESS
+                        } else {
+                            return -1;
+                        }
+
+                    } // end of getter code!
+                },// end of overall 'bottomEdge' property block!
+
+                // #########################################################################################
+                // #########################################################################################
+
+
+
                 "resizeClass": {
                     "get": function() { 
                         return sResizeClass;
@@ -1303,6 +1696,30 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 "maxPos": {
                     "get": function() { 
                         return nMaxPos;
+                    } // end of getter code!
+                },
+
+                "startingLeft": {
+                    "get": function() { 
+                        return nStartingLeft;
+                    } // end of getter code!
+                },
+
+                "startingRight": {
+                    "get": function() { 
+                        return nStartingRight;
+                    } // end of getter code!
+                },
+
+                "startingTop": {
+                    "get": function() { 
+                        return nStartingTop;
+                    } // end of getter code!
+                },
+
+                "startingBottom": {
+                    "get": function() { 
+                        return nStartingBottom;
                     } // end of getter code!
                 },
 
@@ -1340,14 +1757,23 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             if (sAlign=== "left" || sAlign=== "right") {
                 console.log("detected need for vertical resize bar")
                 sResizeClass = "orvPaneResizeToolbarVertical";                
-                sStyle = sStyle + posStyle(previousPane, sAlign);                
-
+                const retVal = posStyle(previousPane, sAlign);                
+                sStyle = sStyle + retVal.style
+                nStartingLeft = retVal.left;
+                nStartingRight = retVal.right;
+                nStartingTop = retVal.top;
+                nStartingBottom = retVal.bottom;
             } // end if
 
             if (sAlign=== "top" || sAlign=== "bottom") {
                 console.log("detected need for horizontal resize bar")
                 sResizeClass = "orvPaneResizeToolbarHorizontal";
-                sStyle = sStyle + posStyle(previousPane, sAlign);
+                const retVal = posStyle(previousPane, sAlign);
+                sStyle = sStyle + retVal.style
+                nStartingLeft = retVal.left;
+                nStartingRight = retVal.right;
+                nStartingTop = retVal.top;
+                nStartingBottom = retVal.bottom;
                 //debugger
                 
             } // end if
@@ -1399,10 +1825,99 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
           //  debugger
 
 
+
+            /********************************************************************************
+             * 
+             * 
+             *   #resize_bar_view_innards
+	         ********************************************************************************/
+            resizeBar.viewInnards = function(bNoDrilldown) {
+                const fm1 = "color:blue;"
+                const fm1b = "color:blue;font-style:italic;"
+                const fm2 = "color:red;font-weight:bold;";
+                const fm3 = "background-color:#ffcc99;padding:4px;";
+                const fm4 = "color:gray;";
+
+                console.groupCollapsed("🔑%cid:               %c'"+resizeBar.id+"'",fm1,fm2)
+                console.log("%cobjType:          %c'"+resizeBar.objType+"'",fm1,fm2)
+                console.log("%calign:            %c'"+sAlign+"'",fm1,fm2)
+                console.log("%cstartingLeft:      %c"+resizeBar.startingLeft+" ",fm1,fm2)
+                console.log("%cstartingRight:     %c"+resizeBar.startingRight+" ",fm1,fm2)
+                console.log("%cstartingTop:       %c"+resizeBar.startingTop+" ",fm1,fm2)
+                console.log("%cstartingBottom:    %c"+resizeBar.startingBottom+" ",fm1,fm2)
+                console.log("%cmaxPos:            %c"+resizeBar.maxPos+" ",fm1,fm2)
+                console.log("%cminPos:            %c"+resizeBar.minPos+" ",fm1,fm2)
+                console.log("%cresizeClass:      %c'"+resizeBar.resizeClass+"'",fm1,fm2)
+
+                console.group("%cresize bar Edge values:  ... over from top-left of the container...",fm3)
+                console.log("%cleftEdge:          %c"+resizeBar.leftEdge+" ",fm1,fm2)
+
+                // if (resizeBar.id === 'orvPaneEl6') {
+                //     debugger
+                // } // end if
+
+                console.log("%crightEdge:         %c"+resizeBar.rightEdge+" ",fm1,fm2)
+                console.log("%ctopEdge:           %c"+resizeBar.topEdge+" ",fm1,fm2)
+                console.log("%cbottomEdge:        %c"+resizeBar.bottomEdge+" ",fm1,fm2)
+                console.groupEnd(); // end of resize bar edge values
+
+
+                if (typeof bNoDrilldown === "undefined") {
+
+                    console.log("%ccurrentPane:",fm1b)
+                    resizeBar.currentPane.viewInnards(true)
+                    console.log("%cpreviousPane:",fm1b)
+                    resizeBar.previousPane.viewInnards(true)
+
+                    if (resizeBar.extraPanesForCurrent.length > 0) {
+                        console.group("extraPanesForCurrent("+resizeBar.extraPanesForCurrent.length+" elements):")
+                        let nMax = resizeBar.extraPanesForCurrent.length;
+                        for (let n=0;n<nMax;n++) {
+                            let paneWrapper = resizeBar.extraPanesForCurrent[n];
+                            paneWrapper.pane.viewInnards(true);
+                        } // next n
+                        console.groupEnd();
+                    } else {
+                        console.log("%cextraPanesForCurrent(0 elements):",fm4)
+                    } // end if/else
+                    
+                    
+                    if (resizeBar.extraPanesForPrevious.length > 0) {
+                        console.group("extraPanesForPrevious("+resizeBar.extraPanesForPrevious.length+" elements):")
+                        let nMax = resizeBar.extraPanesForPrevious.length;
+                        for (let n=0;n<nMax;n++) {
+                            let paneWrapper = resizeBar.extraPanesForPrevious[n];
+                            paneWrapper.pane.viewInnards(true);
+                        } // next n
+                        console.groupEnd();
+                    } else {
+                        console.log("%cextraPanesForPrevious(0 elements):",fm4)
+                    } // end if/else
+                    
+                } else {
+                    console.log("%ccurrentPane:",fm1b)
+                    console.log("          🔑id:   '"+resizeBar.currentPane.id+"'")
+                    console.log("%cpreviousPane:",fm1b)
+                    console.log("          🔑id:   '"+resizeBar.previousPane.id+"'")
+
+                    
+                } // end if
+
+                //console.log("      =====================================================")
+                console.groupEnd();
+                
+
+            } // end of resizeBar.viewInnards() method!
+
+
+
+
             /********************************************************************************
              * 
              * 
              *    Search for:  "#resize_prop_def"
+             * 
+             *    #resize_bar_add_another_pane
 	         ********************************************************************************/
             resizeBar.addAnotherPane = function(newPane, sPrevCurrent, matchupPane) {
                 console.log("🧀🧀 resizeBar.addAnotherPane() method called 🧀🧀")
@@ -1436,6 +1951,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             * 
             *  Called multiple times from:   pane.genMarkup()
             * 
+            *  #resize_bar_get_html_markup
 	        ********************************************************************************/
             resizeBar.getHtmlMarkup = function() {
                 console.log("🤔🤔resizeBar.getHtmlMarkup() method called")
@@ -1467,6 +1983,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
              * 
              *    Let plain JavaScript resize bar object know about the 
              *    DOM element that it is working with!
+             * 
+             *    #resize_bar_set_dom_ref
 	         ********************************************************************************/
             resizeBar.setDomRef = function() {
                 console.log("💈 resizeBar.setDomRef() method called 💈")
@@ -1494,6 +2012,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
     /********************************************************************************
      * 
+     *  #mouse_events
+     * 
+     *  #panes_mouse_down
 	 ********************************************************************************/
     function panesMouseDown(evt) {
         console.log("panesMouseDown")
@@ -1510,6 +2031,10 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     /********************************************************************************
      * 
      *   Called by:    masterContainerNd.addEventListener('mousemove')
+     * 
+     *   #mouse_events
+     * 
+     *   #panes_mouse_move
 	 ********************************************************************************/
     function panesMouseMove(evt) {
         //debugger
@@ -1524,6 +2049,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
     /********************************************************************************
      * 
+     *   #mouse_events
+     * 
+     *   #panes_mouse_up
 	 ********************************************************************************/
     function panesMouseUp(evt) {
         //debugger
@@ -1542,6 +2070,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
     /********************************************************************************
      * called by:  CreateResizeBar()
+     * 
+     *   #pos_style
 	 ********************************************************************************/
     function posStyle(previousPane, sAlign) {
         console.log("private posStyle() function called")
@@ -1584,7 +2114,17 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             sStyle = sStyle + "right:"+(nRight)+"px;";
         } // end if
 
-        return sStyle;
+        
+        
+
+        const retVal = {};
+        retVal.style = sStyle;
+        retVal.left = nLeft;
+        retVal.right = nRight;
+        retVal.top = nTop;
+        retVal.bottom = nBottom;
+
+        return retVal;
     } // end of function posStyle()
 
 
@@ -1604,6 +2144,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
 
 	/********************************************************************************
+     * 
+     *   #get_val
 	 ********************************************************************************/
 	function getVal(params,sParam,defVal) {
 		if (!params) {
@@ -1621,6 +2163,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     
 
 	/********************************************************************************
+     *   
+     *   #resize_bar_drag_begin
+     * 
 	 ********************************************************************************/    
     function resizeBarDragBegin(evt) {
 
@@ -1670,6 +2215,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
 
 	/********************************************************************************
+     * 
+     *   #resize_bar_drag_end
 	 ********************************************************************************/    
     function resizeBarDragEnd(evt) {
         const el = evt.srcElement;
@@ -1688,6 +2235,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 	/********************************************************************************
      * 
      *  Called by:   panesMouseMove()
+     *  
+     *  #resize_bar_drag_move
 	 ********************************************************************************/    
     function resizeBarDragMove(evt) {
 
