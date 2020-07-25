@@ -4,6 +4,7 @@
 
     Key Code Reference Tags:
          -  #library_constructor
+         -  #overall_pane_and_resizebar_array_defs
          -  #internal_constants        (for library)
          -  #mouse_event_listeners
          -  #defined_library_properties
@@ -11,17 +12,22 @@
          -  #viewInnards_library                        VIEW INNARDS   (Library)
          -  #library_private_functions
          -  #build_PanesMarkup_For_Container
-         -  #build_Pane_Style_Block
+         -  #build_Pane_Style_Block               STYLE BLOCK
          -  #build_Pane_Style_Unselectable
-         -  #other_Resize_Bar_Mapping
+         -  #other_Resize_Bar_Mapping             🗺🗺🗺FINAL MAPPING 🗺🗺🗺
+         -  #look_for_match
          -  #get_next_id
+
+         PANE STUFF:
          -  #create_pane_funct
-         -  #Create_Pane_constructor
+         -  #Create_Pane_constructor              pane CONSTRUCTOR  🔧🔧🔧
          -  #init_pane_instance_vars
          -  #related_panes_and_resize_bars_init
          -  #pane_positioning_vars_init
+         -  #pane_start_pos_vars_init
          -  #pane_parent_container
          -  #define_pane_obj_properties            PROPERTY DEFS
+         -  #pane_start_position_properties        PROPERTY DEFS
          -  #pane_edge_position_properties         PROPERTY DEFS   (pane edge)
          -  #pane_id_property_def
          -  #pane_add_pane_method     (to add a child pane to a pane)
@@ -34,22 +40,35 @@
          -  #pane_set_new_pos
          -  #pane_set_new_width
          -  #pane_view_innards                     VIEW INNARDS  (pane)
+
+         RESIZE BAR STUFF:
+         -  #resize_bar_add_related_item_method       --- ADD RELATED ITEM!
          -  #resize_bar_view_innards               VIEW INNARDS  (resize bar)
          -  #create_resize_bar_funct
-         -  #create_resize_bar_constructor
+         -  #create_resize_bar_constructor         resize bar CONSTRUCTOR 🔧🔧🔧
+         -  #resize_bar_instance_array_defs
          -  #resize_prop_def                       PROPERTY DEFS
          -  #resize_bar_edge_position_properties   PROPERTY DEFS  (resize bar edge)
+         -  #resize_bar_starting_pos_property_defs PROPERTY DEFS  ("" starting pos) 
+         -  #resize_bar_basic_pos_properties       PROPERTY DEFS  (Basic CSS positions)
+         -  #resize_bar_set_pos_adjust_flag  
+         -  #resize_bar_set_start_pos      
+         -  #resize_bar_set_new_pos
          -  #resize_bar_add_another_pane
          -  #resize_bar_get_html_markup
          -  #resize_bar_set_dom_ref
+         
+
+         EVENT HANDLER STUFF:
          -  #mouse_events
          -  #panes_mouse_down
-         -  #panes_mouse_move
+         -  #panes_mouse_move                          
          -  #panes_mouse_up
          -  #resize_bar_drag_begin
          -  #resize_bar_drag_end
-         -  #resize_bar_drag_move
+         -  #resize_bar_drag_move                  RESIZE BAR DRAG!
 
+         MISC:
          -  #pos_style
          -  #get_val               (used to process input params)
          
@@ -90,6 +109,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     const masterContainer = {}; // object representing our master container
     const Q = '"';
     
+    // #overall_pane_and_resizebar_array_defs
     let containerPanesByIndex = [];
     let containerPanesById = [];
     let bContentPaneAdded = false;
@@ -101,6 +121,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     let nNextIdNum = 1;
 
     let bLogResizeNumbers = false;
+
+    let nReportDepth = 0; // for console log report
 
     let lastLeftPane;
     let lastRightPane;
@@ -304,18 +326,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             resizeBar.setDomRef();
         } // next n2
 
-        /********************************************************************************
-           final pass through the panes to map extra resize panes
-
-         ********************************************************************************/
-        for (let n=0;n<nMax;n++) {
-            const pane = containerPanesByIndex[n];
-            const nMax3 = pane.relatedItemsByIndex.length;
-
-            if (nMax3 > 0) {
-                otherResizeBarMapping(pane);
-            } // end if
-        } // next n
+        
+        otherResizeBarMapping();
+            
 
 
         bPanesRendered = true;
@@ -535,58 +548,229 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
 
 
+
+  /********************************************************************************
+   * 
+   *
+   ********************************************************************************/    
+    function isApproxEqualTo(val1, val2) {
+        if (val1 === val2) return true;
+
+        if (val1 > val2) {
+            let nTemp = val1;
+            val1 = val2;
+            val2 = nTemp;
+        } // end if
+
+        nDiff = val2 - val1;
+        
+        let nMarginForError = orvRESIZE_BAR_HALFTHICKNESS;
+
+        if (nMarginForError < 3) {
+            nMarginForError = 3;
+        } // end if
+
+        if (nDiff<= nMarginForError) {
+            return true;
+        } // end if
+
+        return false;
+    } // end of function isApproxEqualTo()
+
+
+
+
   /********************************************************************************
    * 
    *  Called from:   pns.showPanes() method
    * 
    * #other_Resize_Bar_Mapping
+   * 
+   *  sorta doing a brute force method here... it shouldn't matter performance-wise
+   *  in this particular application.
    ********************************************************************************/
-   function otherResizeBarMapping(pane) {
+   function otherResizeBarMapping() {
+
        console.log("😜😜otherResizeBarMapping()  called 😜😜")
-        const nMax = pane.relatedItemsByIndex.length;
-        for (let n=0;n<nMax;n++) {
-            const pane2 = pane.relatedItemsByIndex[n];
-            const resizeBarsByIndex = pane2.resizeBarsByIndex;
-            const nMax2 = resizeBarsByIndex.length;
-            
-            for (let n2=0;n2<nMax2;n2++) {
-                const resizeBar = resizeBarsByIndex[n2];
 
-                if (pane2.align === resizeBar.align) {
-                    console.log("possible resize bar found!")
+       const nMax1 = resizeBarsByIndex.length;
+       const nMax2 = allPanesByIndex.length;
 
-                    const previousPane = resizeBar.previousPane;
-                    const currentPane = resizeBar.currentPane;
 
-                    if (resizeBar.align === "left" || resizeBar.align === "right") {
-                        if (previousPane.left === pane2.left || previousPane.right === pane2.right) {
-                            resizeBar.addAnotherPane(pane2, "prev", previousPane);
-                            console.log("another pane added based on previousPane value")
-                        } // end if
 
-                        if (currentPane.left === pane2.left || currentPane.right === pane2.right) {
-                            resizeBar.addAnotherPane(pane2, "curr", currentPane);
-                            console.log("another pane added based on currentPane value")
-                        } // end if
+       console.group("Processing Resize Bars...   ("+nMax1+") ... outer loop (n1)");
+       for (let n1=0;n1<nMax1;n1++) {
+           const rb = resizeBarsByIndex[n1];
+           
+
+           console.groupCollapsed("processing resize bar... id: '"+rb.id+"'   index: "+n1)
+           console.log("resizeClass:    '"+rb.resizeClass+"'") 
+           console.log("style:          '"+rb.style+"'") 
+
+           let sSearchForPaneId = "";  // only for debugging
+
+           if (rb.id ==="orvPaneEl7") {
+               //sSearchForPaneId = "orvPaneEl3";
+               //debugger;
+           } // end if
+
+           console.group("Processing Panes and comparing to this resize bar...   first inner loop");
+           for (let n2=0;n2<nMax2;n2++) {
+               const pn = allPanesByIndex[n2];
+               console.log("comparing with pane: '"+pn.id+"'")
+
+               if (pn.id === sSearchForPaneId) {
+                   debugger
+               } // end if
+
+               lookForMatch(rb, pn);
+           } // next n2 (panes)
+
+           console.groupEnd(); // end of processing panes
+
+           
+
+           // doing sub-loop through resize bars...
+           console.group("Comparing to other resize bars...   2nd inner loop");
+           for (let n3=0;n3<nMax1;n3++) {
+                const rb2 = resizeBarsByIndex[n3];
+                
+                if (rb.id !== rb2.id) {
+                    console.log("comparing with resize bar: '"+rb2.id+"'")
+                    lookForMatch(rb, rb2);
+                } // end if
+           } // next n3
+           console.groupEnd(); // end of Comparing to other resize bars
+
+           console.groupEnd(); // end of Outer resize bar (singular)
+
+       } // next n1 (resize bars)
+       console.groupEnd(); // end of processing resize bars
+
+       console.log("completed executing: %cotherResizeBarMapping()","font-weight:bold;color:blue;")
+   } // end of function otherResizeBarMapping()
+
+
+
+
+  /********************************************************************************
+   * 
+   * 
+   *    #look_for_match
+   * 
+   ********************************************************************************/   
+   function lookForMatch(itm1, itm2) {
+        console.group("lookForMatch() called.")
+
+        let sObjType = itm2.objType;
+
+        let sChangeAttribute = "";
+        
+        // Orv See:  "MORE PANE NOTES"   in Evernote!
+        if (itm1.resizeClass === "orvPaneResizeToolbarHorizontal") {
+                                //  👇 bottom edge of pane
+                                                  //  👇 top edge of horizontal resize bar
+            if (isApproxEqualTo(itm2.bottomEdge, itm1.topEdge)) {
+                // formula needs to determine if they are overlapping
+                if (itm1.leftEdge <= itm2.leftEdge && itm1.rightEdge >= itm2.rightEdge) {
+                    // match
+                    // pane is 👉👉  **[Above]**   resize bar
+                    // will want to adjusts pane's css {bottom, or height} property
+                    console.log("%cA Match Found!","color:red;")
+
+                    sChangeAttribute = "bottom";
+
+                    if (itm2.align ==="top" || itm2.align ==="bottom") {
+                        sChangeAttribute = "height";
                     } // end if
-
-                    if (resizeBar.align === "top" || resizeBar.align === "bottom") {
-                        if (previousPane.top === pane2.top || previousPane.bottom === pane2.bottom) {
-                            resizeBar.addAnotherPane(pane2, "prev", previousPane);
-                            console.log("another pane added based on previousPane value")
-                        } // end if
-
-                        if (currentPane.top === pane2.top || currentPane.bottom === pane2.bottom) {
-                            resizeBar.addAnotherPane(pane2, "curr", currentPane);
-                            console.log("another pane added based on currentPane value")
-                        } // end if
-                    } // end if
+                                                             //   👇  pos of pane related to resize bar
+                    itm1.addRelatedItem(itm2, sChangeAttribute, "above")
+                    console.groupEnd() // lookForMatchPane group
+                    return
                 } // end if
 
-            } // next n2
+            } // end if (isApproxEqualTo(rb.topEdge, pn.bottomEdge))
 
-        } // next n
-   } // end of function otherResizeBarMapping()
+            //*** if (rb.bottomEdge === pn.topEdge) 
+                                   //  👇 bottom edge of horizontal resize bar
+                                                  //  👇 top edge of pane
+            if (isApproxEqualTo(itm1.bottomEdge, itm2.topEdge)) {
+                if (itm1.leftEdge <= itm2.leftEdge && itm1.rightEdge >= itm2.rightEdge) {
+                    // match
+                    // pane is 👉👉 **[Below]**   resize bar
+                    //will want to adjusts pane's css {height, or top} property
+                    console.log("%cA Match Found!","color:red;")
+
+                    sChangeAttribute = "top";
+
+                    if (itm2.align ==="top" || itm2.align ==="bottom") {
+                        sChangeAttribute = "height";
+                    } // end if
+
+                                                              //   👇  pos of pane related to resize bar
+                    itm1.addRelatedItem(itm2, sChangeAttribute, "below")
+                    console.groupEnd() // lookForMatchPane group
+                    return;
+                } // end if                 
+
+            } // end if (isApproxEqualTo(rb.bottomEdge, pn.topEdge))
+
+        } // end if(itm1.resizeClass === "orvPaneResizeToolbarHorizontal")
+
+
+        //orvPaneResizeToolbarVertical
+        if (itm1.resizeClass === "orvPaneResizeToolbarVertical") {
+            //*** if (rb.leftEdge === pn.rightEdge)
+                                             //  👇left edge of vertical resize bar
+                               //  👇 right edge of pane
+            if (isApproxEqualTo(itm2.rightEdge, itm1.leftEdge)) {
+                if (itm1.topEdge <= itm2.topEdge && itm1.bottomEdge >= itm2.bottomEdge) {
+                    // match
+                    // pane is to the 👉👉 **[Left]**  of the resize bar
+                    // will want to adjust pane's css  {right, or width} property
+                    console.log("%cA Match Found!","color:red;")
+
+                    sChangeAttribute = "right";
+
+                    if (itm2.align ==="left" || itm2.align ==="right") {
+                        sChangeAttribute = "width";
+                    } // end if
+                                                            //   👇  pos of pane related to resize bar
+                    itm1.addRelatedItem(itm2, sChangeAttribute,"left")
+                    console.groupEnd() // lookForMatchPane group
+                    return;
+
+                } // end if
+
+            } // end if (isApproxEqualTo(rb.leftEdge, pn.rightEdge))
+
+            //*** if (rb.rightEdge === pn.leftEdge)
+                               //  👇 right edge of vertical resize bar
+                                                //  👇 left edge of pane
+            if (isApproxEqualTo(itm1.rightEdge, itm2.leftEdge)) {
+                if (itm1.topEdge <= itm2.topEdge && itm1.bottomEdge >= itm2.bottomEdge) {
+                    // match
+                    // pane is to the 👉👉 **[Right]**  of the resize bar
+                    // will want to adjust pane's css {left or width} property
+                    console.log("%cA Match Found!","color:red;")
+                    sChangeAttribute = "left";
+
+                    if (itm2.align ==="left" || itm2.align ==="right") {
+                        sChangeAttribute = "width";
+                    } // end if
+                                                             //   👇  pos of pane related to resize bar
+                    itm1.addRelatedItem(itm2, sChangeAttribute, "right")
+                    console.groupEnd() // lookForMatchPane group
+                    return;
+                } // end if
+            } // end if
+
+        } // end if(itm1.resizeClass === "orvPaneResizeToolbarVertical")
+       
+        console.groupEnd() // lookForMatch group
+
+   } // end of function lookForMatch()
+
 
 
 
@@ -647,7 +831,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let nCurrentWidth = getVal(params,"width",400);
             let nCurrentHeight = getVal(params,"height",400);
             let sOverflow = getVal(params,"overflow","auto");
-            
+        
             let bPosAdjusted = false;
 
             // related panes and resize bars
@@ -655,6 +839,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let relatedItemsByIndex = []; 
             let relatedItemsById = []; 
 
+            
+            let sPaneStyle = "";
             let sPaneContent = getVal(params,"paneContent","");
 
             // window specific GUI settings
@@ -677,8 +863,19 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let nPaneRight = -1;
             let nPaneTop = -1;
             let nPaneBottom = -1;
+            let nPaneHeight = nCurrentHeight;
+            let nPaneWidth = nCurrentWidth;
             let nWindowLeft = -1;
             let nWindowTop = -1;
+
+            // #pane_start_pos_vars_init
+            // Note: Starting Pos is starting pos at the beginning of a resize bar drag!
+            let nStartingTop = -1;
+            let nStartingBottom = -1;
+            let nStartingHeight = nCurrentHeight;
+            let nStartingLeft = -1;
+            let nStartingRight = -1;
+            let nStartingWidth = nCurrentWidth;
             
             let nLastCurrentWidth = nCurrentWidth;
             let nLastCurrentHeight = nCurrentHeight;
@@ -710,7 +907,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     "get": function() { 
                         return nMinWidth;
                     } // end of getter code!
-                },  // end of getter code!
+                },  // end of "minWidth" property definition
 
                 "width": {
                     "get": function() { 
@@ -734,6 +931,51 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                         return "???";
                     } // end of getter code!
                 },
+
+
+                // ####################################################################
+                //  #pane_start_position_properties
+                //
+                //  The position of these things at the beginning of a 
+                //  resize bar drag.
+                // ####################################################################
+
+                "startingTop": {
+                    "get": function() { 
+                        return nStartingTop;
+                    } // end of getter code!
+                },
+
+                "startingBottom": {
+                    "get": function() { 
+                        return nStartingBottom;
+                    } // end of getter code!
+                },
+
+                "startingHeight": {
+                    "get": function() { 
+                        return nStartingHeight;
+                    } // end of getter code!
+                },
+
+                "startingLeft": {
+                    "get": function() { 
+                        return nStartingLeft;
+                    } // end of getter code!
+                },
+
+                "startingRight": {
+                    "get": function() { 
+                        return nStartingRight;
+                    } // end of getter code!
+                },
+
+                "startingWidth": {
+                    "get": function() { 
+                        return nStartingWidth;
+                    } // end of getter code!
+                },
+
 
                 // ####################################################################
                 //  #pane_edge_position_properties
@@ -887,6 +1129,22 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
            /********************************************************************************
             *  
+            *  called at the beginning of a resize bar drag.
+	        ********************************************************************************/
+           pane.setStartPos = function() {
+                console.log("called pane.setStartPos() method")
+                nStartingTop = nPaneTop;
+                nStartingBottom = nPaneBottom;
+                nStartingHeight = nPaneHeight;
+                nStartingLeft = nPaneLeft;
+                nStartingRight = nPaneRight;
+                nStartingWidth = nPaneWidth;
+           } // end of pane.setStartPos()  method
+           
+           
+
+           /********************************************************************************
+            *  
 	        ********************************************************************************/
             pane.setPosAdjustFlag = function(bNewValue) {
                 bPosAdjusted = bNewValue;
@@ -899,10 +1157,13 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             *  #pane_add_pane_method
 	        ********************************************************************************/
             pane.addPane = function(params) {
-                console.log(" 🍼🍼  pane.addPane() method called to add a Child pane!!  🍼🍼")
+                console.group(" 🍼🍼  pane.addPane() method called to add a Child pane!!  🍼🍼")
                 params.parentContainer = pane;
+                const pane = createPane(params);
+                console.groupEnd();
 
-                return createPane(params);
+                return pane;
+
             } // end of addPane() method (on pane object!)
 
 
@@ -921,29 +1182,6 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
             } // end of pane.addContent() method (for pane object only)
 
-
-
-           /********************************************************************************
-            *  
-            *   called by:    pane.genMarkup()
-            * 
-            *   Note:
-            *   -----
-            *   The contents of the internal variable:   relatedItemsByIndex   can be access from the {pane}
-            *   object via the:   relatedItemsByIndex property of the pane!
-            * 
-            *   #pane_add_related_pane
-	        ********************************************************************************/            
-            pane.addRelatedPane = function(relatedPane) {
-                console.log(" ⛽ pane.addRelatedPane() called")
-                if (relatedPane.id !== sPaneId) {
-                    if (typeof relatedItemsById[relatedPane.id] === "undefined") {
-                        relatedItemsById[relatedPane.id] = relatedPane;
-                        relatedItemsByIndex.push(relatedPane);
-                    } // end if
-                } // end if
-
-            } // end of pane.addRelatedPane() method
 
 
            /********************************************************************************
@@ -982,15 +1220,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 const theLast = theLastCreatedPanes;
                 const s1=[]; // HTML for any resize bar
                 const s2=[]; // HTML for the current pane
-
-                if (typeof theLast.pane !== "undefined" && sPaneId !== theLast.pane.id) {
-                    if (typeof relatedItemsById[theLast.pane.id] === "undefined") {
-                        relatedItemsById[theLast.pane.id] = theLast.pane;
-                        relatedItemsByIndex.push(theLast.pane);
-                        theLast.pane.addRelatedPane(pane); // circular referencing :D
-                    } // end if
-                } // end if
-
+            
+                
                 s2.push("<div class='orvPane' ");
 
                 s2.push("id="+Q);
@@ -1010,11 +1241,12 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                         nLastPaneLeft = nPaneLeft;
                         nLastPaneRight = nPaneRight;
 
-                        s2.push("top:"+(nPaneTop)+"px;");
-                        s2.push("height:"+(nCurrentHeight)+"px;");      // ***                     
-                        s2.push("left:"+(nPaneLeft)+"px;");                        
-                        s2.push("right:"+(nPaneRight)+"px;");
-
+                        sPaneStyle = "top:"+(nPaneTop)+"px;"
+                        sPaneStyle = sPaneStyle +"height:"+(nCurrentHeight)+"px;";
+                        sPaneStyle = sPaneStyle +"left:"+(nPaneLeft)+"px;"
+                        sPaneStyle = sPaneStyle +"right:"+(nPaneRight)+"px;"
+                        s2.push(sPaneStyle);
+                        
                         if (theNext.topPos>0) {
                             console.log("about to call: createResizeBar()")
                             const rb = createResizeBar({align: "top", previousPane: theLast.topPane, 
@@ -1057,6 +1289,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                         break;
                     case orvPANE_ALIGN_LEFT:
                         console.log("📮creating a pane's HTML markup to align to the Left")
+                        
                         nPaneLeft = theNext.leftPos;
                         nPaneTop = theNext.topPos;
                         nPaneBottom = theNext.bottomPos;
@@ -1264,6 +1497,11 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     sNewHeight = "   nNewHeight:"+nNewHeight;
                 } // end if
 
+                if (nNewHeight === -1) {
+                    console.log("new height value was (-1)... state was not set!")
+                    return;
+                } // end if
+
                 console.log("pane.setNewHeight() called."+sNewHeight)
                 console.log("  😳 pane.id: '"+sPaneId+"'")
                 console.log("   😳 nLastCurrentHeight (before): "+nLastCurrentHeight)
@@ -1272,17 +1510,14 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
           //      if (bPosAdjusted) return;
 
                 if (nNewHeight < nMinHeight) {                    
-                    nNewHeight = nMinHeight;
-                    if (bLogResizeNumbers) {
-                        console.log("❗nNewHeight < nMinHeight ("+nMinHeight+") set to nMinHeight!")
-                    } // end if
+                    return false; // failed
                 } // end if
 
                 nLastCurrentHeight = nCurrentHeight;
                 console.log("  😳 nLastCurrentHeight (after): "+nLastCurrentHeight)
                 nCurrentHeight = nNewHeight;
                 paneNd.style.height = (nCurrentHeight)+"px";
-                
+                return true; // was a success
             } // end of pane.setNewHeight() method
 
 
@@ -1302,6 +1537,14 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 console.log("pane.setNewPos() called.   sAlign: '"+sAlign+"' "+sNewPos)
                 console.log("   😳 pane.id: '"+sPaneId+"'")
                 
+                if (nNewPos === -1) {
+                    console.log("input value was (-1)... state was not set!")
+                    return false;
+                } // end if
+
+                if (nNewPos < 0) {
+                    return false;
+                }
 
              //   if (bPosAdjusted) return;
 
@@ -1328,6 +1571,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 paneNd.style[sAlign] = (nNewPos)+"px";
                 
                 console.log("have set:   paneNd.style."+sAlign+" = '"+(nNewPos)+"px'")
+                return true; // was a success
             } // end of pane.setNewPos() method
 
 
@@ -1347,6 +1591,11 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     sNewWidth = "   nNewWidth:"+nNewWidth;
                 } // end if
 
+                if (nNewWidth === -1) {
+                    console.log("new width is (-1) state was not set!")
+                    return false;
+                } // end if
+
                 console.log("pane.setNewWidth() called."+sNewWidth)
                 console.log("   😳 pane.id: '"+sPaneId+"'")
                 console.log("   😳 nLastCurrentWidth (before): "+nLastCurrentWidth)
@@ -1354,10 +1603,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
              //   if (bPosAdjusted) return;
 
                 if (nNewWidth < nMinWidth) {                    
-                    nNewWidth = nMinWidth;
-                    if (bLogResizeNumbers) {
-                        console.log("❗nNewWidth < nMinWidth ("+nMinWidth+") set to nMinWidth!")
-                    } // end if
+                    return false; // failed
                 } // end if
 
                 nLastCurrentWidth = nCurrentWidth;
@@ -1366,6 +1612,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 nCurrentWidth = nNewWidth;
                 paneNd.style.width = (nCurrentWidth)+"px";
                 
+                console.log("new value for:   paneNd.style.width: '"+paneNd.style.width+"'")
+                return true; // was a success
             } // end of pane.setNewWidth() method
 
 
@@ -1378,6 +1626,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             pane.viewInnards = function(bNoDrilldown) {
                 let nMax;
                 let sIndent = "";
+
+                nReportDepth = nReportDepth + 1;
 
                 const fm1 = "color:blue;"
                 const fm1b = "color:blue;font-style:italic;"
@@ -1427,7 +1677,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     const relItm = relatedItemsByIndex[n]
 
                     if (typeof bNoDrilldown === "undefined")  {
-                        if (relItm.objType === "pane") {
+                        if (relItm.objType === "pane" && nReportDepth < 6) {
                             relItm.viewInnards(true)
                         } // end if
                     } else {
@@ -1453,18 +1703,22 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     for (let n=0;n<nMax;n++) {
                         const rb = paneResizeBarsByIndex[n];
     
-                        if (typeof bNoDrilldown === "undefined"){
-                            rb.viewInnards()
-                        } else {
-                            rb.viewInnards(true)
-                        } // end if/else
-                        
+                        if (nReportDepth < 6) {
+                            if (typeof bNoDrilldown === "undefined"){
+                                rb.viewInnards()
+                            } else {
+                                rb.viewInnards(true)
+                            } // end if/else
+                        } // end if
+
                     } // next n
                     console.groupEnd(); // end of paneResizeBarsByIndex group
                 } // end if/else
                 
                 
                 console.groupEnd(); // end of group for current pane having its innards viewed!
+
+                nReportDepth = nReportDepth - 1;
 
                 if (typeof bNoDrilldown === "undefined") {
                     console.log("***************************************************************")
@@ -1550,7 +1804,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let sAlign = getVal(params,"align","left");
             let sResizeClass;
             let sStyle = "";
-            let resizeBarNd; // DOM node of resize bar
+            let resizeBarNd; // DOM node element of resize bar
 
 
             let parentContainer = getVal(params,"parentContr",{});
@@ -1558,27 +1812,20 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             // DOM node element of the parent container
             let parentContainerNode = getVal(params,"parentContainerEl",{});
 
-            let relatedItemsByIndex = [];
-            let relatedItemsById = [];
+            // #resize_bar_instance_array_defs
+            let relatedItemsByIndex = [];            
+            
+            // Note: Starting Pos is starting pos at the beginning of a resize bar drag!
+            let nStartingLeft = -1,nStartingRight = -1,nStartingTop = -1,nStartingBottom = -1;
 
-            let extraPanesByIndex = [];
-            let extraPanesById = [];
-            let extraPanesByPrevCurr = [];
-
-            let nStartingLeft,nStartingRight,nStartingTop,nStartingBottom;
-
-            extraPanesByPrevCurr["curr"] = [];
-            extraPanesByPrevCurr["prev"] = [];
-
+            let nResizeLeft = -1,nResizeRight = -1,nResizeTop = -1,nResizeBottom = -1;
+            let nLastResizeLeft,nLastResizeRight,nLastResizeTop,nLastResizeBottom;
+            let bResizeBarPosAdjusted = false;
 
             // reference to pane objects on either side of resize bar:
             let previousPane = params.previousPane;
             let currentPane = params.currentPane;
-            let nPos = params.pos;
-
-            console.log("about to associate the current and previous Panes with this resize bar...")
-            addRelationships(previousPane, currentPane.id)
-            addRelationships(currentPane, previousPane.id)
+            
 
             // initial values until overridden...
             let nMinPos = 0;
@@ -1632,6 +1879,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                             return -1;
                         } else if (nStartingRight > -1) {
                             return parentContainerNode.offsetWidth - nStartingRight;
+                    //    } else if (nStartingRight > -1) {
+
                         } else {
                             return nStartingLeft + orvRESIZE_BAR_THICKNESS;
                         } // end if / else if / else
@@ -1674,6 +1923,12 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 // #########################################################################################
 
 
+                "relatedItemsByIndex": {
+                    "get": function() { 
+                        return relatedItemsByIndex;
+                    } // end of getter code!
+                },  
+
 
                 "resizeClass": {
                     "get": function() { 
@@ -1699,6 +1954,10 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     } // end of getter code!
                 },
 
+                // #resize_bar_starting_pos_property_defs
+
+                // Note: Starting Pos is starting pos at the beginning of a resize bar drag!
+
                 "startingLeft": {
                     "get": function() { 
                         return nStartingLeft;
@@ -1711,6 +1970,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     } // end of getter code!
                 },
 
+                
+
                 "startingTop": {
                     "get": function() { 
                         return nStartingTop;
@@ -1722,6 +1983,34 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                         return nStartingBottom;
                     } // end of getter code!
                 },
+
+                // #resize_bar_basic_pos_properties
+                // -------------------------------------------
+                "top": {
+                    "get": function() { 
+                        return nResizeTop;
+                    } // end of getter code!
+                },
+
+                "bottom": {
+                    "get": function() { 
+                        return nResizeBottom;
+                    } // end of getter code!
+                },
+
+                "left": {
+                    "get": function() { 
+                        return nResizeLeft;
+                    } // end of getter code!
+                },  
+
+                "right": {
+                    "get": function() { 
+                        return nResizeRight;
+                    } // end of getter code!
+                },
+
+                // -------------------------------------------
 
                 "extraPanesForCurrent": {
                     "get": function() { 
@@ -1752,17 +2041,18 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 
             }); // end of Object.defineProperties
 
-
+          //  if (sResizeBarId==='orvPaneEl5') debugger;
 
             if (sAlign=== "left" || sAlign=== "right") {
                 console.log("detected need for vertical resize bar")
                 sResizeClass = "orvPaneResizeToolbarVertical";                
                 const retVal = posStyle(previousPane, sAlign);                
                 sStyle = sStyle + retVal.style
-                nStartingLeft = retVal.left;
-                nStartingRight = retVal.right;
-                nStartingTop = retVal.top;
-                nStartingBottom = retVal.bottom;
+                nResizeLeft = retVal.left;
+                nResizeRight = retVal.right;
+                nResizeTop = retVal.top;
+                nResizeBottom = retVal.bottom;
+
             } // end if
 
             if (sAlign=== "top" || sAlign=== "bottom") {
@@ -1770,61 +2060,56 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 sResizeClass = "orvPaneResizeToolbarHorizontal";
                 const retVal = posStyle(previousPane, sAlign);
                 sStyle = sStyle + retVal.style
-                nStartingLeft = retVal.left;
-                nStartingRight = retVal.right;
-                nStartingTop = retVal.top;
-                nStartingBottom = retVal.bottom;
-                //debugger
+
+                nResizeLeft = retVal.left;
+                nResizeRight = retVal.right;
+                nResizeTop = retVal.top;
+                nResizeBottom = retVal.bottom;       
                 
             } // end if
 
-            
+            nStartingLeft = nResizeLeft;
+            nStartingRight = nResizeRight;
+            nStartingTop = nResizeTop;
+            nStartingBottom = nResizeBottom;
 
-            /********************************************************************************
-             * add pane relationships to this {resize bar} based on alignment of neighboring 
-             * panes
-             * 
-             *   Called from:    CreateResizeBar()
-             * 
-	         ********************************************************************************/
-            function addRelationships(refPane, sOtherPaneId) {
-                console.log("  🍭 addRelationships() called.   Other pane.id='"+sOtherPaneId+"' refPane.id='"+refPane.id+"' 🍭")
-                const relatedItemsByIndex2 = refPane.relatedItemsByIndex;
-                const nMax = relatedItemsByIndex2.length;
-                
-                for (let n=0;n<nMax;n++) {
-                    const relatedItem = relatedItemsByIndex2[n];
-
-                    if (relatedItem.id !==previousPane.id && relatedItem.id !==currentPane.id) {
-                        if (sAlign=== "left" || sAlign=== "right") {
-                            if (relatedItem.align === "top" || relatedItem.align=== "bottom") {
-                                if (typeof relatedItemsById[relatedItem.id] === "undefined") {
-                                    relatedItemsById[relatedItem.id] = relatedItem;
-                                    relatedItemsByIndex.push(relatedItem);
-                                } // end if
-                            } // end if
-                        } // end if
-        
-                        if (sAlign=== "top" || sAlign=== "bottom") {
-                            if (relatedItem.align=== "left" || relatedItem.align=== "right") {
-                                if (typeof relatedItemsById[relatedItem.id] === "undefined") {
-                                    relatedItemsById[relatedItem.id] = relatedItem;
-                                    relatedItemsByIndex.push(relatedItem);
-                                } // end if
-                            } // end if
-                        } // end if
-                    } // end if
-                } // next n
-
-            } // end of function addRelationships()
-
-
-
+            nLastResizeLeft = nResizeLeft;
+            nLastResizeRight = nResizeRight;
+            nLastResizeTop = nResizeTop;
+            nLastResizeBottom = nResizeBottom;
 
             console.log("sStyle = '"+sStyle+"'")
           //  debugger
 
 
+            /********************************************************************************
+             * 
+             * 
+             *   #resize_bar_add_related_item_method
+	         ********************************************************************************/
+            resizeBar.addRelatedItem = function(obj, sAdjustProperty, sPosRelatedToResizeBar) {
+                console.log("resizeBar.addRelatedItem() method called...")
+
+                if (typeof sAdjustProperty === "undefined") {
+                    debugger
+                } // end if
+
+                if (typeof sPosRelatedToResizeBar === "undefined") {
+                    debugger
+                } // end if
+
+                const relatedItem = {};
+                relatedItem.obj = obj;
+                relatedItem.objType = obj.objType;
+                relatedItem.adjustProperty = sAdjustProperty;
+                relatedItem.posRelatedToResizeBar = sPosRelatedToResizeBar;
+                relatedItemsByIndex.push(relatedItem);
+               // relatedItemsByAlignment[sAdjustProperty].push(relatedItem);
+            } // end of resizeBar.addRelatedItem() method
+
+
+
+            
 
             /********************************************************************************
              * 
@@ -1837,6 +2122,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 const fm2 = "color:red;font-weight:bold;";
                 const fm3 = "background-color:#ffcc99;padding:4px;";
                 const fm4 = "color:gray;";
+
+                nReportDepth = nReportDepth + 1;
 
                 console.groupCollapsed("🔑%cid:               %c'"+resizeBar.id+"'",fm1,fm2)
                 console.log("%cobjType:          %c'"+resizeBar.objType+"'",fm1,fm2)
@@ -1852,23 +2139,50 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 console.group("%cresize bar Edge values:  ... over from top-left of the container...",fm3)
                 console.log("%cleftEdge:          %c"+resizeBar.leftEdge+" ",fm1,fm2)
 
-                // if (resizeBar.id === 'orvPaneEl6') {
-                //     debugger
-                // } // end if
+                 if (resizeBar.id === 'orvPaneEl4') {
+                   //  debugger
+                 } // end if
 
                 console.log("%crightEdge:         %c"+resizeBar.rightEdge+" ",fm1,fm2)
                 console.log("%ctopEdge:           %c"+resizeBar.topEdge+" ",fm1,fm2)
                 console.log("%cbottomEdge:        %c"+resizeBar.bottomEdge+" ",fm1,fm2)
                 console.groupEnd(); // end of resize bar edge values
 
+                let nMax2 = resizeBar.relatedItemsByIndex.length;
+
+                if (nMax2 > 0) {
+                    console.group("%crelatedItemsByIndex...("+nMax2+")",fm3)
+                    
+                    for (let n=0;n<nMax2;n++) {
+                        const relatedItm = resizeBar.relatedItemsByIndex[n];
+                        const relatedItmObj = relatedItm.obj;
+                        console.group("["+n+"] relatedItm    id: '"+relatedItmObj.id+"'")
+
+                        console.log("%cadjustProperty:          %c'"+relatedItm.adjustProperty+"' ",fm1,fm2)
+                        console.log("%cposRelatedToResizeBar:   %c'"+relatedItm.posRelatedToResizeBar+"' ",fm1,fm2)
+                        console.log("%cobjType:                 %c'"+relatedItm.objType+"' ",fm1,fm2)
+
+                        if (nReportDepth < 6) {
+                            relatedItmObj.viewInnards(true)
+                        } // end if
+
+                        console.groupEnd(); // end of relatedItm
+                    } // next n
+                    console.groupEnd(); // end of relatedItemsByIndex values
+                } // end if
+
+
 
                 if (typeof bNoDrilldown === "undefined") {
 
-                    console.log("%ccurrentPane:",fm1b)
-                    resizeBar.currentPane.viewInnards(true)
-                    console.log("%cpreviousPane:",fm1b)
-                    resizeBar.previousPane.viewInnards(true)
+                    if (nReportDepth < 6) {
+                        console.log("%ccurrentPane:",fm1b)
+                        resizeBar.currentPane.viewInnards(true)
+                        console.log("%cpreviousPane:",fm1b)
+                        resizeBar.previousPane.viewInnards(true)
+                    } // end if
 
+                    /*
                     if (resizeBar.extraPanesForCurrent.length > 0) {
                         console.group("extraPanesForCurrent("+resizeBar.extraPanesForCurrent.length+" elements):")
                         let nMax = resizeBar.extraPanesForCurrent.length;
@@ -1893,7 +2207,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     } else {
                         console.log("%cextraPanesForPrevious(0 elements):",fm4)
                     } // end if/else
-                    
+                    */
                 } else {
                     console.log("%ccurrentPane:",fm1b)
                     console.log("          🔑id:   '"+resizeBar.currentPane.id+"'")
@@ -1906,9 +2220,91 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 //console.log("      =====================================================")
                 console.groupEnd();
                 
+                nReportDepth = nReportDepth - 1;
 
             } // end of resizeBar.viewInnards() method!
 
+
+
+           /********************************************************************************
+             * 
+             *   called at the beginning of a resize bar drag.
+             * 
+             *   #resize_bar_set_start_pos
+	         ********************************************************************************/
+            resizeBar.setStartPos = function() {
+                console.log("resizeBar.setStartPos() method called")
+                nStartingLeft = nResizeLeft;
+                nStartingRight = nResizeRight;
+                nStartingTop = nResizeTop;
+                nStartingBottom = nResizeBottom;
+            } // end of resizeBar.setStartPos() method
+
+
+
+
+           /********************************************************************************
+             * 
+             *   Called from:  
+             * 
+             *   #resize_bar_set_pos_adjust_flag
+	         ********************************************************************************/
+            resizeBar.setPosAdjustFlag = function(bNewValue) {
+                bResizeBarPosAdjusted = bNewValue;
+            } // end of resizeBar.setPosAdjustFlag() method
+
+
+
+            resizeBar.rollBackLastValues = function() {
+                
+                if (nResizeLeft !== nStartingLeft) {
+                    resizeBar.setNewPos(nStartingLeft, "left")
+                } // end if
+
+                if (nResizeRight !== nStartingRight) {
+                    resizeBar.setNewPos(nStartingRight, "right")
+                } // end if
+
+            } // end of resizeBar.rollBackLastValues() method
+
+
+           /********************************************************************************
+             * 
+             *   Called from:   resizeBarDragMove()
+             * 
+             *   #resize_bar_set_new_pos
+	         ********************************************************************************/
+            resizeBar.setNewPos = function(nNewPos, sAlign) {
+                console.log("resizeBar.setNewPos() called.    nNewPos="+nNewPos+"   sAlign='"+sAlign+"'")
+
+                if (nNewPos < 0) {
+                    return false;
+                } // end if
+
+                if (sAlign === "left") {
+                    nLastResizeLeft = nResizeLeft;
+                    nResizeLeft = nNewPos;
+                } // end if
+
+                if (sAlign === "right") {
+                    nLastResizeRight = nResizeRight;
+                    nResizeRight = nNewPos;
+                } // end if
+
+                if (sAlign === "top") {
+                    nLastResizeTop = nResizeTop;
+                    nResizeTop = nNewPos;
+                } // end if
+
+                if (sAlign === "bottom") {
+                    nLastResizeBottom = nResizeBottom;
+                    nResizeBottom = nNewPos;
+                } // end if
+
+                resizeBarNd.style[sAlign] = (nNewPos)+"px";
+                return true; // success
+
+            }  // end of resizeBar.setNewPos() method
 
 
 
@@ -1965,7 +2361,12 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 s.push(sResizeBarId);
                 s.push(Q);
 
-                s.push("style=");
+                // temp:
+                s.push(" title="+Q);
+                s.push(sResizeBarId);
+                s.push(Q);
+
+                s.push(" style=");
                 s.push(Q);
                 s.push(sStyle);
                 s.push(Q);
@@ -1987,9 +2388,22 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
              *    #resize_bar_set_dom_ref
 	         ********************************************************************************/
             resizeBar.setDomRef = function() {
-                console.log("💈 resizeBar.setDomRef() method called 💈")
+                console.log("💈 resizeBar.setDomRef() method called. id: '"+sResizeBarId+"'   💈")
                 resizeBarNd = document.getElementById(sResizeBarId)
             } // end of setDomRef() method
+
+
+
+
+
+           /********************************************************************************
+            *    called at the beginning of a resize bar drag...
+	        ********************************************************************************/            
+            resizeBar.setStartPos = function() {
+                console.log("called resizeBar.setStartPos() method")
+            } // end of resizeBar.setStartPos() method
+
+
 
 
             // global references to the resize bars are added to:
@@ -2188,29 +2602,20 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         resizeBarEl = el;
         resizeBarEl.style.backgroundColor = orvRESIZE_BAR_DRAGCOLOR;
 
-        
-      
-        nPrevPanelStartSize = activeResizeBarObj.previousPane.width;
-        nCurrentPanelStartSize = activeResizeBarObj.currentPane.width;
+        // reset all panel start positions
+        const nMax = allPanesByIndex.length;
+        for (let n=0;n<nMax;n++) {
+            const pane = allPanesByIndex[n];
+            pane.setStartPos();
+        } // next n
 
-        if (sResizeAlign === "top" || sResizeAlign === "bottom") {
-            nPrevPanelStartSize = activeResizeBarObj.previousPane.height;
-            nCurrentPanelStartSize = activeResizeBarObj.currentPane.height;
-        } // end if
+        // now reset all resize bar start positions
+        const nMax2 = resizeBarsByIndex.length;
+        for (let n=0;n<nMax2;n++) {
+            const resizeBar = resizeBarsByIndex[n];
+            resizeBar.setStartPos();
+        } // next n
 
-        nCurrentPanelStartLeft = activeResizeBarObj.currentPane.left;
-        nCurrentPanelStartRight = activeResizeBarObj.currentPane.right;
-        nPrevPanelStartLeft = activeResizeBarObj.previousPane.left;
-        nPrevPanelStartRight = activeResizeBarObj.previousPane.right;
-
-        nCurrentPanelStartTop = activeResizeBarObj.currentPane.top;
-        nCurrentPanelStartBottom = activeResizeBarObj.currentPane.bottom;
-        nPrevPanelStartTop = activeResizeBarObj.previousPane.top;
-        nPrevPanelStartBottom = activeResizeBarObj.previousPane.bottom;
-
-        relatedItemsStartValues = [];
-        
-        //debugger
     } // end of function resizeBarDragBegin()
 
 
@@ -2228,23 +2633,27 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         sActiveResizeBarId = "";
         activeResizeBarObj = undefined;
         resizeBarEl = undefined;
-        relatedItemsStartValues = [];
     } // end of function resizeBarDragEnd()
 
 
 	/********************************************************************************
      * 
      *  Called by:   panesMouseMove()
+     * 
+     *  Only called if a resize bar element is selected!
      *  
      *  #resize_bar_drag_move
 	 ********************************************************************************/    
     function resizeBarDragMove(evt) {
 
+        console.groupCollapsed("resizeBarDragMove() called...   pageX="+evt.pageX+"   pageY="+evt.pageY)
         if (evt.buttons !== orvLEFT_MOUSE_BUTTON) {
             // if the Left mouse button is no longer being pressed, then 
             // the user must have taken their hand off the mouse button
             // after leaving the mouse up area. So we want to force an End of the drag operation!
+            console.log("mouse button is not down... drag operation is reset!")
             resizeBarDragEnd(evt);
+            console.groupEnd(); // odd-ball closing resizeBarDragMove
             return;
         } // end if
 
@@ -2252,104 +2661,99 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
         const el = evt.srcElement;
 
+        const relatedItemsByIndex = activeResizeBarObj.relatedItemsByIndex;
+
         let nOffsetX = evt.pageX - nResizeStartX;
         let nOffsetY =  nResizeStartY - evt.pageY;
-        let nNewPos, nNewPos2, nNewWidth, nNewHeight;
-        let nMax,extraPanes;
-       // let nOffsetY = evt.pageY - nResizeStartY;
-
-
-        if (sResizeAlign === "top") {
-            // Resize Bar
+        let nNewValue;
+        let sPosRelatedToResizeBar;
+       
+        // =====================================
+        //  Selected Resize Bar is re-positioned:
+        // =====================================        
+        if (sResizeAlign === "top") {            
             nNewPos = nBarStartPos+nOffsetY;
-            resizeBarEl.style.top = (nNewPos)+"px"
         } // end if
 
         if (sResizeAlign === "bottom") {
-            // Resize Bar
             nNewPos = nBarStartPos+nOffsetY;
-            resizeBarEl.style.bottom = (nNewPos)+"px"
-
-            // current pane:
-            // =============
-            let nOldCurrentBottom = activeResizeBarObj.currentPane.bottom;
-            let nOldCurrentHeight = activeResizeBarObj.previousPane.height;
-
-            nNewPos2 = nCurrentPanelStartBottom+nOffsetY;            
-            activeResizeBarObj.currentPane.setNewPos(nNewPos2, "bottom");
-            activeResizeBarObj.currentPane.setPosAdjustFlag(true);
-
-            // process extra current panes:
-            extraPanes = activeResizeBarObj.extraPanesForCurrent;
-            nMax = extraPanes.length;
-            for (let n=0;n<nMax;n++) {
-                const extraPane = extraPanes[n].pane;
-
-                console.log("extraPane.bottom="+extraPane.bottom);
-                console.log("nOldCurrentBottom="+nOldCurrentBottom);
-
-                if (extraPane.bottom === nOldCurrentBottom) {
-                    extraPane.setNewPos(nNewPos2, "bottom");
-                } // end if
-
-            } // next n
-
-
-            // previous pane:
-            // ==============
-            nNewHeight = nPrevPanelStartSize+nOffsetY;
-            activeResizeBarObj.previousPane.setNewHeight(nNewHeight);
-            activeResizeBarObj.previousPane.setPosAdjustFlag(true);
-
-            // process extra previous panes:
-            extraPanes = activeResizeBarObj.extraPanesForPrevious;
-            nMax = extraPanes.length;
-            for (let n=0;n<nMax;n++) {
-                const extraPane = extraPanes[n].pane;
-
-                console.log("extraPane.height="+extraPane.height);
-                console.log("nOldCurrentHeight="+nOldCurrentHeight);
-
-                if (extraPane.height === nOldCurrentHeight) {
-                    extraPane.setNewHeight(nNewHeight);
-                } // end if
-
-            } // next n
-
-        } // end if (sResizeAlign === "bottom")
-
+        } // end if
 
         if (sResizeAlign === "left") {
-            // Resize Bar
             nNewPos = nBarStartPos+nOffsetX;
-            resizeBarEl.style.left = (nNewPos)+"px"
-
-            // previous pane
-            nNewWidth = nPrevPanelStartSize+nOffsetX;
-            activeResizeBarObj.previousPane.setNewWidth(nNewWidth);
-            activeResizeBarObj.previousPane.setPosAdjustFlag(true);
-
-            // current pane
-            nNewPos2 = nCurrentPanelStartLeft+nOffsetX;
-            activeResizeBarObj.currentPane.setNewPos(nNewPos2, "left");
-            activeResizeBarObj.currentPane.setPosAdjustFlag(true);
         } // end if
 
         if (sResizeAlign === "right") {
-            // Resize Bar
             nNewPos = nBarStartPos-nOffsetX;
-            resizeBarEl.style.right = (nNewPos)+"px"
-
-            // current pane
-            nNewPos2 = nCurrentPanelStartRight-nOffsetX;            
-            activeResizeBarObj.currentPane.setNewPos(nNewPos2, "right");
-            activeResizeBarObj.currentPane.setPosAdjustFlag(true);
-
-            // previous pane
-            nNewWidth = nPrevPanelStartSize-nOffsetX;            
-            activeResizeBarObj.previousPane.setNewWidth(nNewWidth);
-            activeResizeBarObj.previousPane.setPosAdjustFlag(true);
         } // end if
+
+        activeResizeBarObj.setNewPos(nNewPos, sResizeAlign);
+
+//debugger
+        // =====================================
+        //  now adjust the proper panes
+        //  and related resize bars...
+        // =====================================
+        const nMax = relatedItemsByIndex.length;
+        console.log("relatedItemsByIndex count: "+nMax)
+        for (let n=0;n<nMax;n++) {
+            const relatedItem = relatedItemsByIndex[n];
+            const relatedItemObj = relatedItem.obj;
+
+            if (relatedItem.adjustProperty !== "") {
+                sPosRelatedToResizeBar = relatedItem.posRelatedToResizeBar; // NOT in relatedItemObj !
+
+                nNewValue = 0;
+
+                if (relatedItem.adjustProperty === "width") {
+                    if (sPosRelatedToResizeBar === "left") {
+                        nNewValue = relatedItemObj.startingWidth+nOffsetX;                    
+                    } else {
+                        // below would be 'right' then! ...
+                        nNewValue = relatedItemObj.startingWidth-nOffsetX; 
+                    } // end if/else
+
+                    relatedItemObj.setNewWidth(nNewValue);
+
+                } else if (relatedItem.adjustProperty === "height") {
+                    if (sPosRelatedToResizeBar === "above") {
+                        nNewValue = relatedItemObj.startingHeight-nOffsetY;
+                    } else {
+                        nNewValue = relatedItemObj.startingHeight+nOffsetY;
+                    } // end if/else
+
+                    relatedItemObj.setNewHeight(nNewValue);
+
+                } else {
+                    if (relatedItem.adjustProperty === "bottom") {
+                        nNewValue = relatedItemObj.startingBottom+nOffsetY;
+                    } // end if
+
+                    if (relatedItem.adjustProperty === "top") {
+                        nNewValue = relatedItemObj.startingTop+nOffsetY;
+                    } // end if
+
+                    if (relatedItem.adjustProperty === "left") {
+                        nNewValue = relatedItemObj.startingLeft+nOffsetX;
+                    } // end if
+
+                    if (relatedItem.adjustProperty === "right") {
+                        nNewValue = relatedItemObj.startingRight-nOffsetX; 
+                    } // end if
+
+                    relatedItemObj.setNewPos(nNewValue, relatedItem.adjustProperty);
+                } // end if / else if / else if / else
+
+                relatedItemObj.setPosAdjustFlag(true);
+
+            } // end if (relatedItem.adjustProperty !== "") 
+
+        } // next n
+        
+        // =====================================
+        // =====================================
+
+        console.groupEnd(); // resizeBarDragMove() called
 
     } // end of function resizeBarDragMove()
 
