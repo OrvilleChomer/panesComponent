@@ -7,7 +7,8 @@ function pageSetup() {
 
     orvPanes.logResizeNumbers = true; // debugging feature... false to turn off!
     
-    paneLeft = orvPanes.addPane({caption:"Design", paneAlignment: orvPANE_ALIGN_LEFT, paneContent:"Hello There! This is the <b>first pane</b>"});
+    paneLeft = orvPanes.addPane({caption:"Design", paneAlignment: orvPANE_ALIGN_LEFT, 
+                                 paneContent:"Hello There! This is the <b>first pane</b>"});
     
     
     paneBottom = orvPanes.addPane({caption:"Whatsoever", paneAlignment: orvPANE_ALIGN_BOTTOM, paneContent:"right pane"});
@@ -66,10 +67,31 @@ function pageSetup() {
     
     
     // VIEWPORT CONTENT
-    sContent = "<div style="+Q;
+
+    sContent = ""
+    s = [];
+    s.push("<div style=")
+    s.push(Q)
+    s.push("width:98.5%;margin:4px;padding:4px;background:lightblue;border:solid blue 1px;")
+    s.push(Q)
+    s.push(">Well Hello There!  -- I'm here to show you if this <i>pane</i> is being resized properly on horizontal plane!")
+    s.push("</div>")
+
+    s.push("<div style=")
+    s.push(Q)
+    s.push("width:30px;background:lightblue;border:solid blue 1px;position:absolute;left:2px;top:72px;bottom:2px;")
+    s.push(Q)
+    s.push(">")
+    s.push("</div>")
+
+    sContent = sContent + s.join("")
+
+    sContent = sContent + "<h3>This is my contrived viewport!</h3>"
+
+    sContent = sContent + "<div style="+Q;
     sContent = sContent + "position:absolute;"
-    sContent = sContent + "left:0px;"
-    sContent = sContent + "top:0px;"
+    sContent = sContent + "left:70px;"
+    sContent = sContent + "top:70px;"
     sContent = sContent + "bottom:0px;"
     sContent = sContent + "width:3000px;"
     //sContent = sContent + "height:650px;"
@@ -78,7 +100,7 @@ function pageSetup() {
     sContent = sContent + Q;
     sContent = sContent + ">"
 
-    sContent = sContent + "<h3>This is my contrived viewport!</h3>"
+    
 
     s = [];
 
@@ -91,6 +113,9 @@ function pageSetup() {
     s.push(Q)
     s.push(">View <b>orvPanes</b>' Innards</button>")
 
+    s.push("<hr>")
+
+    
 
     s.push("<hr>")
     s.push("<button onclick="+Q)
@@ -186,15 +211,6 @@ function viewInnards(sPaneObjName) {
 
     paneObj.viewInnards()
 
-    debugger;
-
-    let ris = paneObj.relatedItemsByIndex;
-    let nMax = ris.length;
-    let ri1;
-
-    if (nMax > 0) {
-        ri1 = ris[0];
-    }
 } // end of function viewInnards()
 
 
