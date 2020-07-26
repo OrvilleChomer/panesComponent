@@ -5,7 +5,7 @@ function pageSetup() {
     const Q = '"';
     let s = [];
 
-    orvPanes.logResizeNumbers = true; // debugging feature... false to turn off!
+    //orvPanes.logResizeNumbers = true; // debugging feature... false to turn off!
     
     paneLeft = orvPanes.addPane({caption:"Design", paneAlignment: orvPANE_ALIGN_LEFT, 
                                  paneContent:"Hello There! This is the <b>first pane</b>"});
@@ -14,7 +14,8 @@ function pageSetup() {
     paneBottom = orvPanes.addPane({caption:"Whatsoever", paneAlignment: orvPANE_ALIGN_BOTTOM, paneContent:"right pane"});
 
     
-    paneRight = orvPanes.addPane({caption:"Properties", paneAlignment: orvPANE_ALIGN_RIGHT, paneContent:"right pane"});
+    paneRight = orvPanes.addPane({caption:"Properties", paneAlignment: orvPANE_ALIGN_RIGHT, 
+                                  paneContent:"right pane"});
 
     // always do last:
     paneViewport = orvPanes.addPane({caption:"Viewport",  paneContent:"This is the viewport...",
@@ -32,6 +33,14 @@ function pageSetup() {
     s.push(">View This Pane's Innards</button>")
     s.push("<br>")
     s.push("pane.id="+paneLeft.id)
+    s.push("<div style=")
+    s.push(Q)
+    s.push("position:absolute;top:200px;left:0px;right:0px;")
+    s.push("margin:4px;padding:4px;background:lightblue;border:solid blue 1px;")
+    s.push(Q)
+    s.push(">abc")
+    s.push("</div>")
+
     sContent = sContent + s.join("")
     paneLeft.addContent({paneContent:sContent});
 
@@ -63,6 +72,15 @@ function pageSetup() {
     s.push("orvPanes.logResizeNumbers = "+orvPanes.logResizeNumbers)
     s.push("<br>")
     s.push("pane.id="+paneRight.id)
+    s.push("<br>")
+    s.push("<div style=")
+    s.push(Q)
+    s.push("position:absolute;top:200px;left:0px;right:0px;")
+    s.push("margin:4px;padding:4px;background:lightblue;border:solid blue 1px;")
+    s.push(Q)
+    s.push(">abc")
+    s.push("</div>")
+
     paneRight.addContent({paneContent:s.join("")});
     
     
