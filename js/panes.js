@@ -6,6 +6,7 @@
          -  #library_constructor
          -  #overall_pane_and_resizebar_array_defs
          -  #internal_constants        (for library)
+         -  #offending_pane_variables            💀💀 OFFENDING PANE VARIABLES! 💀💀
          -  #mouse_event_listeners
          -  #defined_library_properties
          -  #show_panes                (method for render)
@@ -30,6 +31,8 @@
          -  #pane_start_position_properties        PROPERTY DEFS
          -  #pane_edge_position_properties         PROPERTY DEFS   (pane edge)
          -  #pane_id_property_def
+         -  #pane_set_start_pos_method
+         -  #pane_apply_changes_method             🖍 APPLY CHANGES 🖍   ... for pane
          -  #pane_add_pane_method     (to add a child pane to a pane)
          -  #pane_add_content
          -  #pane_add_related_pane
@@ -52,7 +55,8 @@
          -  #resize_bar_starting_pos_property_defs PROPERTY DEFS  ("" starting pos) 
          -  #resize_bar_basic_pos_properties       PROPERTY DEFS  (Basic CSS positions)
          -  #resize_bar_set_pos_adjust_flag  
-         -  #resize_bar_set_start_pos      
+         -  #resize_bar_set_start_pos   
+         -  #resize_bar_apply_changes_method       🖍 APPLY CHANGES 🖍   ... for resize bar
          -  #resize_bar_set_new_pos
          -  #resize_bar_add_another_pane
          -  #resize_bar_get_html_markup
@@ -72,7 +76,8 @@
          -  #pos_style
          -  #get_val               (used to process input params)
          
-         -
+         - #highlight_offending_pane
+         - #clear_offending_pane
 
 
 
@@ -144,7 +149,16 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     const orvRESIZE_BAR_THICKNESS = 3; // 6
     const orvRESIZE_BAR_HALFTHICKNESS = Math.floor(orvRESIZE_BAR_THICKNESS / 2.0);
     const orvRESIZE_BAR_COLOR = "#D0D0D0";
-    const orvRESIZE_BAR_DRAGCOLOR = "lightblue";
+    const orvRESIZE_BAR_DRAGCOLOR = "#ff9966";
+
+    // sizing error colors:
+    const orvPANE_ERR_BACKGROUND_COLOR = "pink";
+    const orvPANE_ERR_TITLEBAR_BACKGROUND_COLOR = "pink";
+    const orvPANE_ERR_TITLEBAR_TEXT_COLOR = "red";
+    const orvRESIZE_BAR_ERR_COLOR = "red";
+
+    const orvDEF_MIN_WIDTH = 150;
+    const orvDEF_MIN_HEIGHT = 150;
 
     const orvLEFT_MOUSE_BUTTON = 1;
 
@@ -179,6 +193,10 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     let sResizeAlign = "";
     let activeResizeBarObj = undefined;
     let resizeBarEl;
+
+    //  #offending_pane_variables
+    let sOffendingPaneId = "";
+    let offendingPane;
 
     // #mouse_event_listeners
     masterContainerNd.addEventListener("mousedown", panesMouseDown);
@@ -433,7 +451,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         s.push("  box-sizing: border-box;");
         s.push("  position:absolute;");
         s.push("  overflow:hidden;");
-        s.push("  border:solid gray 1px;");  // temp ???
+        s.push("  border:solid "+PANE_BACKGROUND_COLOR+" 1px;");  // 
         s.push("  background:"+PANE_BACKGROUND_COLOR+";");
         s.push("  margin:0px;");
         s.push(buildPaneStyleUnselectable());
@@ -452,7 +470,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         s.push("  right:3px;");
         s.push("  top:23px;"); // 3px
         s.push("  bottom:3px;");
-        s.push("  border:solid gray .5px;");  // temp ???
+        s.push("  border:solid "+PANE_BACKGROUND_COLOR+" .5px;");  // 
         s.push("}");
 
 
@@ -461,10 +479,10 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         s.push("  box-sizing: border-box;");
         s.push("  overflow:hidden;");
         s.push("  position:absolute;");
-        s.push("  background: darkblue;");
-        s.push("  left:3px;");
-        s.push("  right:3px;");
-        s.push("  top:3px;");
+        s.push("  background: #E5E5E5;");
+        s.push("  left:0px;");
+        s.push("  right:0px;");
+        s.push("  top:0px;");
         s.push("  height:18px;");
         s.push(buildPaneStyleUnselectable());
         s.push("}");
@@ -473,16 +491,15 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         s.push("  box-sizing: border-box;");
         s.push("  overflow:hidden;");
         s.push("  position:absolute;");
-        s.push("  top:0px;");
+        s.push("  top:1px;");
         s.push("  margin:0px;");
         s.push("  padding:0px;");
         s.push("  left:5px;");
         s.push("  right:36px;");
-        //s.push("  background: pink;");
-        s.push("  color: white;");
+
+        s.push("  color: #616161;");
         s.push("  font-family: tahoma;");
-        s.push("  font-size: 14px;");
-        s.push("  font-weight: bold;");
+        s.push("  font-size: 13px;");
         s.push("  text-height: 18px;");
         s.push("}");
 
@@ -826,8 +843,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let bShowTitleBar = getVal(params,"showTitleBar",true);
             let bAllowWindowToggle = getVal(params,"allowWindowToggle",true); // can user toggle back and forth between window and pane...
             let sCaption = getVal(params,"caption","Pane "+(allPanesByIndex.length+1));
-            let nMinWidth = getVal(params,"minWidth",40);
-            let nMinHeight = getVal(params,"minHeight",40);
+            let nMinWidth = getVal(params,"minWidth",orvDEF_MIN_WIDTH);
+            let nMinHeight = getVal(params,"minHeight",orvDEF_MIN_HEIGHT);
             let nCurrentWidth = getVal(params,"width",400);
             let nCurrentHeight = getVal(params,"height",400);
             let sOverflow = getVal(params,"overflow","auto");
@@ -877,13 +894,14 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let nStartingRight = -1;
             let nStartingWidth = nCurrentWidth;
             
-            let nLastCurrentWidth = nCurrentWidth;
-            let nLastCurrentHeight = nCurrentHeight;
-            let nLastPaneLeft = nPaneLeft;
-            let nLastPaneRight = nPaneRight;
-            let nLastPaneTop = nPaneTop;
-            let nLastPaneBottom = nPaneBottom;
+            let nPendingPaneTop = -1;
+            let nPendingPaneBottom = -1;
+            let nPendingPaneLeft = -1;
+            let nPendingPaneRight = -1;
+            let nPendingPaneWidth = -1;
+            let nPendingPaneHeight = -1;
 
+            
             // ref objects:
             // #pane_parent_container
             let parentContainer = getVal(params,"parentContainer",masterContainer);  // masterContainer is the fallback
@@ -894,7 +912,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             } // end if
 
             // ref to pane DIV that is part of DOM (when it is finally generated)
-            let paneNd,paneContentNd;
+            let paneNd,paneContentNd,paneTitleBarNd,paneTitleBarCaptionNd;
 
             console.log("sCaption='"+sCaption+"'   ... sPaneId: '"+sPaneId+"'");
 
@@ -1130,6 +1148,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
            /********************************************************************************
             *  
             *  called at the beginning of a resize bar drag.
+            * 
+            *   #pane_set_start_pos_method
 	        ********************************************************************************/
            pane.setStartPos = function() {
                 console.log("called pane.setStartPos() method")
@@ -1139,9 +1159,66 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 nStartingLeft = nPaneLeft;
                 nStartingRight = nPaneRight;
                 nStartingWidth = nPaneWidth;
+
+                nPendingPaneTop = -1;
+                nPendingPaneBottom = -1;
+                nPendingPaneLeft = -1;
+                nPendingPaneRight = -1;
+                nPendingPaneWidth = -1;
+                nPendingPaneHeight = -1;
+
            } // end of pane.setStartPos()  method
            
            
+           /********************************************************************************
+            *  
+            *    #pane_apply_changes_method
+	        ********************************************************************************/
+            pane.applyChanges = function() {
+                console.log("pane.applyChanges() method called.   id='"+pane.id+"'")
+
+                if (nPendingPaneTop > -1) {
+                    nPaneTop = nPendingPaneTop;
+                    paneNd.style.top = (nPaneTop)+"px";
+                    nPendingPaneTop = -1;
+                } // end if
+
+                if (nPendingPaneBottom > -1) {
+                    nPaneBottom = nPendingPaneBottom;
+                    paneNd.style.bottom = (nPaneBottom)+"px";
+                    nPendingPaneBottom = -1;
+                } // end if
+
+                if (nPendingPaneLeft > -1) {
+                    nPaneLeft = nPendingPaneLeft;
+                    paneNd.style.left = (nPaneLeft)+"px";
+                    nPendingPaneLeft = -1;
+                } // end if
+
+                if (nPendingPaneRight > -1) {
+                    nPaneRight = nPendingPaneRight;
+                    paneNd.style.right = (nPaneRight)+"px";
+                    nPendingPaneRight = -1;
+                } // end if
+
+                if (nPendingPaneWidth > 0) {
+                    nCurrentWidth = nPendingPaneWidth;
+                    paneNd.style.width = (nCurrentWidth)+"px";
+                    nPendingPaneWidth = -1;
+                } // end if
+
+                if (nPendingPaneHeight > 0) {
+                    nCurrentHeight = nPendingPaneHeight;
+                    paneNd.style.height = (nCurrentHeight)+"px";
+                    nPendingPaneHeight = -1;
+                } // end if
+
+                console.log("pane.applyChanges() Completed.")
+
+            } // end of pane.applyChanges()  method           
+
+
+
 
            /********************************************************************************
             *  
@@ -1410,9 +1487,17 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 
                 if (bShowTitleBar) {
                     s2.push("<div class='orvPaneTitlebar' ");
+
+                    s2.push("id="+Q);
+                    s2.push(sPaneId+"_titleBar");
+                    s2.push(Q);
+
                     s2.push(">");
 
                     s2.push("<div class='orvPaneTitlebarCaption' ");
+                    s2.push("id="+Q);
+                    s2.push(sPaneId+"_titleBarCaption");
+                    s2.push(Q);
                     s2.push(">");
 
                     //sCaption
@@ -1468,7 +1553,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
              *  managing.
              * 
              *  - One is for the overall {pane} panel itself.   paneNd
-             *  - The other is for the element that the pane's "content" is placed in:  paneContentNd
+             *  - Another is for the element that the pane's "content" is placed in:  paneContentNd
+             *  - The pane's title bar is:            paneTitleBar
+             *  - The caption in the title bar is:    paneTitleBarCaption
              * 
              * 
              *   #pane_set_dom_ref
@@ -1477,6 +1564,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 console.log("   🤑 pane.setDomRef() method called 🤑 - sPaneId: '"+sPaneId+"'")
                 paneNd = document.getElementById(sPaneId)
                 paneContentNd = document.getElementById(sPaneId+"_content")
+                paneTitleBarNd = document.getElementById(sPaneId+"_titleBar")
+                paneTitleBarCaptionNd = document.getElementById(sPaneId+"_titleBarCaption")
 
             } // end of setDomRef() method
 
@@ -1497,28 +1586,42 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     sNewHeight = "   nNewHeight:"+nNewHeight;
                 } // end if
 
+                let returnInfo = {};
+                returnInfo.obj = pane;
+                returnInfo.operation = "setNewHeight";
+                returnInfo.objType = "pane";
+                returnInfo.success = true;  // assume success in this case
+                returnInfo.errMsg = "";
+
                 if (nNewHeight === -1) {
                     console.log("new height value was (-1)... state was not set!")
-                    return;
+                    returnInfo.errMsg = "new height value was (-1)... state was not set!";
+                    returnInfo.success = false; 
+                    return returnInfo;
                 } // end if
 
                 console.log("pane.setNewHeight() called."+sNewHeight)
                 console.log("  😳 pane.id: '"+sPaneId+"'")
-                console.log("   😳 nLastCurrentHeight (before): "+nLastCurrentHeight)
-
-
-          //      if (bPosAdjusted) return;
-
+                
                 if (nNewHeight < nMinHeight) {                    
-                    return false; // failed
+                    returnInfo.errMsg = "cannot make pane height < minHeight!";
+                    returnInfo.success = false; 
+                    highlightOffendingPane(pane, paneNd, paneTitleBarNd, paneTitleBarCaptionNd)
+                    
+                    return returnInfo;
                 } // end if
 
-                nLastCurrentHeight = nCurrentHeight;
-                console.log("  😳 nLastCurrentHeight (after): "+nLastCurrentHeight)
-                nCurrentHeight = nNewHeight;
-                paneNd.style.height = (nCurrentHeight)+"px";
-                return true; // was a success
+                nPendingPaneHeight = nNewHeight;
+
+                // clear... if needed...
+                clearOffendingPane(paneNd, paneTitleBarNd, paneTitleBarCaptionNd)
+
+                //paneNd.style.height = (nCurrentHeight)+"px";
+                return returnInfo; // was a success
+
             } // end of pane.setNewHeight() method
+
+
 
 
             /********************************************************************************
@@ -1529,6 +1632,8 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 	         ********************************************************************************/
             pane.setNewPos = function(nNewPos, sAlign) {
                 let sNewPos = "";
+                let nNewCalcWidth;
+                let nNewCalcHeight;
 
                 if (bLogResizeNumbers) {
                     sNewPos = "   nNewPos:"+nNewPos;
@@ -1537,41 +1642,97 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 console.log("pane.setNewPos() called.   sAlign: '"+sAlign+"' "+sNewPos)
                 console.log("   😳 pane.id: '"+sPaneId+"'")
                 
+                let returnInfo = {};
+                returnInfo.obj = pane;
+                returnInfo.operation = "setNewPos";
+                returnInfo.objType = "pane";
+                returnInfo.success = true;  // assume success in this case
+                returnInfo.errMsg = "";
+
                 if (nNewPos === -1) {
                     console.log("input value was (-1)... state was not set!")
-                    return false;
+                    returnInfo.success = false;  
+                    returnInfo.errMsg = "input value was (-1)... state was not set!";
+                    debugger;
+                    return returnInfo;
                 } // end if
 
                 if (nNewPos < 0) {
-                    return false;
-                }
-
-             //   if (bPosAdjusted) return;
+                    returnInfo.success = false;  
+                    returnInfo.errMsg = "nNewPos < 0   ("+nNewPos+")";
+                    debugger;
+                    return returnInfo;
+                } // end if
+ 
+                // ***********
 
                 if (sAlign === "left") {
-                    nLastPaneLeft = nPaneLeft;
-                    nPaneLeft = nNewPos;
+                    if (nStartingWidth === -1) {
+                        nNewCalcWidth = pane.rightEdge - nNewPos; 
+                        if (nNewCalcWidth < nMinWidth) {
+                            returnInfo.success = false;  
+                            highlightOffendingPane(pane, paneNd, paneTitleBarNd, paneTitleBarCaptionNd)
+                            returnInfo.errMsg = "cannot make pane width < minWidth!";
+                            return returnInfo;
+                        } // end if 
+                    } // end if
+                    
+                    nPendingPaneLeft = nNewPos;
+                    console.log("Set   nPendingPaneLeft="+nNewPos)
                 } // end if
 
                 if (sAlign === "right") {
-                    nLastPaneRight = nPaneRight;
-                    nPaneRight = nNewPos;
+                    if (nStartingWidth === -1) {
+                        nNewCalcWidth = parentContainerNode.offsetWidth - nNewPos - pane.leftEdge;
+                        if (nNewCalcWidth < nMinWidth) {
+                            returnInfo.success = false;  
+                            highlightOffendingPane(pane, paneNd, paneTitleBarNd, paneTitleBarCaptionNd)
+                            returnInfo.errMsg = "cannot make pane width < minWidth!";
+                            return returnInfo;
+                        } // end if   
+                    } // end if
+
+                    nPendingPaneRight = nNewPos;
+                    console.log("Set   nPendingPaneLeft="+nNewPos)
                 } // end if
 
                 if (sAlign === "top") {
-                    nLastPaneTop = nPaneTop;
-                    nPaneTop = nNewPos;
+                    if (nStartingHeight === -1) {
+                        nNewCalcHeight = pane.bottomEdge - nNewPos;  
+                        if (nNewCalcHeight < nMinHeight) {
+                            returnInfo.success = false;  
+                            highlightOffendingPane(pane, paneNd, paneTitleBarNd, paneTitleBarCaptionNd)
+                            returnInfo.errMsg = "cannot make pane height < minHeight!";
+                            return returnInfo;
+                        } // end if
+                    } // end if
+
+                    nPendingPaneTop = nNewPos;
+                    console.log("Set   nPendingPaneRight="+nNewPos)
                 } // end if
 
                 if (sAlign === "bottom") {
-                    nLastPaneBottom = nPaneBottom;
-                    nPaneBottom = nNewPos;
+                    if (nStartingHeight === -1) {
+                        nNewCalcHeight = parentContainerNode.offsetHeight - nNewPos - pane.topEdge; 
+                        if (nNewCalcHeight < nMinHeight) {
+                            returnInfo.success = false;  
+                            highlightOffendingPane(pane, paneNd, paneTitleBarNd, paneTitleBarCaptionNd)
+                            returnInfo.errMsg = "cannot make pane height < minHeight!";
+                            return returnInfo;
+                        } // end if
+                    } // end if
+
+                    nPendingPaneBottom = nNewPos;
+                    console.log("Set   nPendingPaneBottom="+nNewPos)
                 } // end if
 
-                paneNd.style[sAlign] = (nNewPos)+"px";
+                //paneNd.style[sAlign] = (nNewPos)+"px";
                 
-                console.log("have set:   paneNd.style."+sAlign+" = '"+(nNewPos)+"px'")
-                return true; // was a success
+                // clear... if needed...
+                clearOffendingPane(paneNd, paneTitleBarNd, paneTitleBarCaptionNd)
+
+                return returnInfo; // was a success
+
             } // end of pane.setNewPos() method
 
 
@@ -1591,29 +1752,41 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                     sNewWidth = "   nNewWidth:"+nNewWidth;
                 } // end if
 
+                let returnInfo = {};
+                returnInfo.obj = pane;
+                returnInfo.operation = "setNewWidth";
+                returnInfo.objType = "pane";
+                returnInfo.success = true;  // assume success in this case
+                returnInfo.errMsg = "";
+
                 if (nNewWidth === -1) {
                     console.log("new width is (-1) state was not set!")
-                    return false;
+                    returnInfo.errMsg = "new width is (-1) state was not set!";
+                    returnInfo.success = false; 
+                    debugger;
+                    return returnInfo;
                 } // end if
 
                 console.log("pane.setNewWidth() called."+sNewWidth)
                 console.log("   😳 pane.id: '"+sPaneId+"'")
-                console.log("   😳 nLastCurrentWidth (before): "+nLastCurrentWidth)
+                console.log("    nMinWidth:  "+nMinWidth)
 
-             //   if (bPosAdjusted) return;
 
-                if (nNewWidth < nMinWidth) {                    
-                    return false; // failed
+                if (nNewWidth < nMinWidth) {         
+                    returnInfo.errMsg = "cannot make pane width < minWidth!";   
+                    returnInfo.success = false;                        
+                    highlightOffendingPane(pane, paneNd, paneTitleBarNd, paneTitleBarCaptionNd)
+
+                    return returnInfo;
                 } // end if
 
-                nLastCurrentWidth = nCurrentWidth;
-                console.log("   😳 nLastCurrentWidth (after): "+nLastCurrentWidth)
 
-                nCurrentWidth = nNewWidth;
-                paneNd.style.width = (nCurrentWidth)+"px";
+                nPendingPaneWidth = nNewWidth;
                 
-                console.log("new value for:   paneNd.style.width: '"+paneNd.style.width+"'")
-                return true; // was a success
+                // clear out... if needed...
+                clearOffendingPane(paneNd, paneTitleBarNd, paneTitleBarCaptionNd)
+
+                return returnInfo; // was a success
             } // end of pane.setNewWidth() method
 
 
@@ -1819,7 +1992,13 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             let nStartingLeft = -1,nStartingRight = -1,nStartingTop = -1,nStartingBottom = -1;
 
             let nResizeLeft = -1,nResizeRight = -1,nResizeTop = -1,nResizeBottom = -1;
-            let nLastResizeLeft,nLastResizeRight,nLastResizeTop,nLastResizeBottom;
+
+            let nPendingResizeLeft = -1;
+            let nPendingResizeRight = -1;
+            let nPendingResizeTop = -1;
+            let nPendingResizeBottom = -1;
+
+
             let bResizeBarPosAdjusted = false;
 
             // reference to pane objects on either side of resize bar:
@@ -2228,7 +2407,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
            /********************************************************************************
              * 
-             *   called at the beginning of a resize bar drag.
+             *   called at the beginning of a Resize-bar drag.
              * 
              *   #resize_bar_set_start_pos
 	         ********************************************************************************/
@@ -2238,9 +2417,51 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                 nStartingRight = nResizeRight;
                 nStartingTop = nResizeTop;
                 nStartingBottom = nResizeBottom;
+
+                nPendingResizeLeft = -1;
+                nPendingResizeRight = -1;
+                nPendingResizeTop = -1;
+                nPendingResizeBottom = -1;
+
             } // end of resizeBar.setStartPos() method
 
 
+
+           /********************************************************************************
+            *  
+            *    #resize_bar_apply_changes_method
+            * 
+            *    pending values are set in:    resizeBar.setNewPos()  method
+	        ********************************************************************************/
+           resizeBar.applyChanges = function() {
+               console.log("resizeBar.applyChanges() method called")
+
+               if (nPendingResizeLeft > -1) {
+                   nResizeLeft = nPendingResizeLeft;
+                   resizeBarNd.style.left = (nResizeLeft)+"px";
+                   nPendingResizeLeft = -1
+               } // end if
+
+               if (nPendingResizeRight > -1) {
+                   nResizeRight = nPendingResizeRight;
+                   resizeBarNd.style.right = (nResizeRight)+"px";
+                   nPendingResizeRight = -1;
+               } // end if
+
+               if (nPendingResizeBottom > -1) {
+                   nResizeBottom = nPendingResizeBottom;
+                   resizeBarNd.style.bottom = (nResizeBottom)+"px";
+                   nPendingResizeBottom = -1;
+               } // end if
+
+               if (nPendingResizeTop > -1) {
+                   nResizeTop = nPendingResizeTop;
+                   resizeBarNd.style.top = (nResizeTop)+"px";
+                   nPendingResizeTop = -1;
+               } // end if
+
+                
+            } // end of resizeBar.applyChanges()  method             
 
 
            /********************************************************************************
@@ -2255,18 +2476,6 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 
 
 
-            resizeBar.rollBackLastValues = function() {
-                
-                if (nResizeLeft !== nStartingLeft) {
-                    resizeBar.setNewPos(nStartingLeft, "left")
-                } // end if
-
-                if (nResizeRight !== nStartingRight) {
-                    resizeBar.setNewPos(nStartingRight, "right")
-                } // end if
-
-            } // end of resizeBar.rollBackLastValues() method
-
 
            /********************************************************************************
              * 
@@ -2277,32 +2486,41 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             resizeBar.setNewPos = function(nNewPos, sAlign) {
                 console.log("resizeBar.setNewPos() called.    nNewPos="+nNewPos+"   sAlign='"+sAlign+"'")
 
+                let returnInfo = {};
+                returnInfo.obj = resizeBar;
+                returnInfo.operation = "setNewPos";
+                returnInfo.objType = "resizeBar";
+                returnInfo.success = true;  // assume success in this case
+                returnInfo.errMsg = "";
+
                 if (nNewPos < 0) {
-                    return false;
+                    returnInfo.success = false; 
+                    returnInfo.errMsg = "nNewPos < 0  ("+nNewPos+")";
+                    return returnInfo;
                 } // end if
 
-                if (sAlign === "left") {
-                    nLastResizeLeft = nResizeLeft;
-                    nResizeLeft = nNewPos;
+                if (sAlign === "left") {                    
+                     //nResizeLeft = nNewPos;
+                     nPendingResizeLeft = nNewPos;
                 } // end if
 
                 if (sAlign === "right") {
-                    nLastResizeRight = nResizeRight;
-                    nResizeRight = nNewPos;
+                    // nResizeRight = nNewPos;
+                    nPendingResizeRight = nNewPos;
                 } // end if
 
                 if (sAlign === "top") {
-                    nLastResizeTop = nResizeTop;
-                    nResizeTop = nNewPos;
+                    // nResizeTop = nNewPos;
+                    nPendingResizeTop = nNewPos;
                 } // end if
 
                 if (sAlign === "bottom") {
-                    nLastResizeBottom = nResizeBottom;
-                    nResizeBottom = nNewPos;
+                    // nResizeBottom = nNewPos;
+                    nPendingResizeBottom = nNewPos;
                 } // end if
 
-                resizeBarNd.style[sAlign] = (nNewPos)+"px";
-                return true; // success
+              //  resizeBarNd.style[sAlign] = (nNewPos)+"px";
+                return returnInfo; // success
 
             }  // end of resizeBar.setNewPos() method
 
@@ -2583,6 +2801,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
 	 ********************************************************************************/    
     function resizeBarDragBegin(evt) {
 
+        sOffendingPaneId = "";
+        offendingPane = undefined;
+
         if (evt.buttons !== orvLEFT_MOUSE_BUTTON) {
             // if not the Left mouse button that was pressed, then leave!
             return;
@@ -2626,6 +2847,9 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
     function resizeBarDragEnd(evt) {
         const el = evt.srcElement;
 
+        sOffendingPaneId = "";
+        offendingPane = undefined;
+
         resizeBarEl.style.backgroundColor = orvRESIZE_BAR_COLOR;
 
         nResizeStartX = -1;
@@ -2657,7 +2881,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             return;
         } // end if
 
-        resetAllPaneAdjustFlags();
+        //resetAllPaneAdjustFlags();
 
         const el = evt.srcElement;
 
@@ -2667,6 +2891,7 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         let nOffsetY =  nResizeStartY - evt.pageY;
         let nNewValue;
         let sPosRelatedToResizeBar;
+        let bSizingError = false;
        
         // =====================================
         //  Selected Resize Bar is re-positioned:
@@ -2687,7 +2912,18 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
             nNewPos = nBarStartPos-nOffsetX;
         } // end if
 
-        activeResizeBarObj.setNewPos(nNewPos, sResizeAlign);
+        let returnInfo;
+        let itemsChanged = [];
+
+        returnInfo = activeResizeBarObj.setNewPos(nNewPos, sResizeAlign);
+
+        if (returnInfo.success) {
+            itemsChanged.push(returnInfo);
+        } else {
+            console.log("Changing Active Resizebar position, FAILED!")
+            debugger;  // in this case, if the code is working, this line should NEVER run!
+            return;
+        } // end if
 
 //debugger
         // =====================================
@@ -2713,7 +2949,13 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                         nNewValue = relatedItemObj.startingWidth-nOffsetX; 
                     } // end if/else
 
-                    relatedItemObj.setNewWidth(nNewValue);
+                    returnInfo = relatedItemObj.setNewWidth(nNewValue);
+                    if (returnInfo.success) {
+                        itemsChanged.push(returnInfo);
+                    } else {
+                        bSizingError = true;
+                        break; // break out of for loop
+                    } // end if
 
                 } else if (relatedItem.adjustProperty === "height") {
                     if (sPosRelatedToResizeBar === "above") {
@@ -2722,7 +2964,13 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                         nNewValue = relatedItemObj.startingHeight+nOffsetY;
                     } // end if/else
 
-                    relatedItemObj.setNewHeight(nNewValue);
+                    returnInfo = relatedItemObj.setNewHeight(nNewValue);
+                    if (returnInfo.success) {
+                        itemsChanged.push(returnInfo);
+                    } else {
+                        bSizingError = true;
+                        break; // break out of for loop
+                    } // end if
 
                 } else {
                     if (relatedItem.adjustProperty === "bottom") {
@@ -2741,10 +2989,17 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
                         nNewValue = relatedItemObj.startingRight-nOffsetX; 
                     } // end if
 
-                    relatedItemObj.setNewPos(nNewValue, relatedItem.adjustProperty);
+                    returnInfo = relatedItemObj.setNewPos(nNewValue, relatedItem.adjustProperty);
+                    if (returnInfo.success) {
+                        itemsChanged.push(returnInfo);
+                    } else {
+                        bSizingError = true;
+                        break; // break out of for loop
+                    } // end if
+
                 } // end if / else if / else if / else
 
-                relatedItemObj.setPosAdjustFlag(true);
+                //relatedItemObj.setPosAdjustFlag(true);
 
             } // end if (relatedItem.adjustProperty !== "") 
 
@@ -2753,9 +3008,70 @@ const orvPANE_ALIGN_WINDOW = 5;   // pane transmorgafies into a window with a z 
         // =====================================
         // =====================================
 
+        if (!bSizingError) {
+            console.log("about to apply resize bar drag changes...")
+            const nMax2 = itemsChanged.length;
+            for (let n=0;n<nMax2;n++) {
+                const itmChanged = itemsChanged[n];
+                itmChanged.obj.applyChanges();
+            } // next n
+            console.log("resize bar drag changes were applied!")
+        } // end if (!bSizingError)
+
         console.groupEnd(); // resizeBarDragMove() called
 
     } // end of function resizeBarDragMove()
+
+
+
+
+	/********************************************************************************
+     * 
+     *   #highlight_offending_pane
+     * 
+     *   called when trying to make pane smaller than minHeight or minWidth
+	 ********************************************************************************/   
+    function highlightOffendingPane(pane, paneNd, paneTitleBarNd, paneTitleBarCaptionNd) {
+        console.log("highlightOffendingPane() called")
+        sOffendingPaneId = pane.id;
+        offendingPane = pane;
+
+        // WILL SET PANE BACKGROUND COLORS TO ERROR COLORS HERE!
+        paneNd.style.backgroundColor = orvPANE_ERR_BACKGROUND_COLOR;
+        paneTitleBarNd.style.backgroundColor = orvPANE_ERR_TITLEBAR_BACKGROUND_COLOR;
+        paneTitleBarCaptionNd.style.color = orvPANE_ERR_TITLEBAR_TEXT_COLOR;
+
+        // RESIZE BAR HIGHLIGHTING:
+        //orvRESIZE_BAR_ERR_COLOR 
+    } // end of function highlightOffendingPane()
+
+
+
+
+	/********************************************************************************
+     * 
+     *   #clear_offending_pane
+     * 
+     *    mostly happens when the drag bar "drag" operation is no longer in error!
+	 ********************************************************************************/   
+    function clearOffendingPane(paneNd, paneTitleBarNd, paneTitleBarCaptionNd) {
+        console.log("clearOffendingPane() called")
+
+        if (sOffendingPaneId !== "") {
+
+            // after clearing these CSS values, it will fall make to their definitions
+            // that are in the CSS class that they are using.
+            paneNd.style.backgroundColor = "";
+            paneTitleBarNd.style.backgroundColor = "";
+            paneTitleBarCaptionNd.style.color = "";
+
+            sOffendingPaneId = "";
+            offendingPane = undefined;
+            console.log("offending Pane Cleared")
+        } // end if
+
+        
+    } // end of function clearOffendingPane()    
 
 
  } // end of constructor function OrvPanes()
